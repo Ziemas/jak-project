@@ -13,7 +13,7 @@ struct SoundBank {
   u32 sound_count;
   union {
     SoundRecord sound[1];
-    u8 buffer[0x800];
+    u8 buffer[10*2048];
   };
 };
 
