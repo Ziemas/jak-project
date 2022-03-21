@@ -1,46 +1,57 @@
 // Copyright: 2021 - 2021, Ziemas
 // SPDX-License-Identifier: ISC
 #include "player.h"
-#include <fmt/format.h>
+#include "third-party/fmt/format.h"
 #include <fstream>
 
 namespace snd {
 
 player::player() : m_synth(m_loader)
 {
-    if (SDL_Init(SDL_INIT_AUDIO) < 0) {
-        throw std::runtime_error("SDL init failed");
+    cubeb_init(&m_ctx, "OpenGOAL", nullptr);
+
+    cubeb_stream_params outparam = {};
+    outparam.channels = 2;
+    outparam.format = CUBEB_SAMPLE_S16LE;
+    outparam.rate = 48000;
+    outparam.layout = CUBEB_LAYOUT_STEREO;
+    outparam.prefs = CUBEB_STREAM_PREF_NONE;
+
+    s32 err = 0;
+    u32 latency = 0;
+    err = cubeb_get_min_latency(m_ctx, &outparam, &latency);
+    if (err != CUBEB_OK)
+    {
+        throw std::runtime_error("Cubeb failed");
     }
 
-    SDL_AudioSpec want {}, got {};
-    want.channels = 2;
-    want.format = AUDIO_S16;
-    want.freq = 48000;
-    want.samples = 4096;
-    want.callback = &sdl_callback;
-    want.userdata = this;
-
-    m_dev = SDL_OpenAudioDevice(nullptr, 0, &want, &got, 0);
-    if (m_dev == 0) {
-        throw std::runtime_error("SDL OpenAudioDevice failed");
+    err = cubeb_stream_init(m_ctx, &m_stream, "OpenGOAL", nullptr, nullptr, nullptr, &outparam, latency, &sound_callback, &state_callback, this);
+    if (err != CUBEB_OK)
+    {
+        throw std::runtime_error("Cubeb failed");
     }
 
-    SDL_PauseAudioDevice(m_dev, 0);
+    err = cubeb_stream_start(m_stream);
+    if (err != CUBEB_OK)
+    {
+        throw std::runtime_error("Cubeb failed");
+    }
 }
 
 player::~player()
 {
-    SDL_PauseAudioDevice(m_dev, 1);
-    SDL_CloseAudioDevice(m_dev);
+    cubeb_stream_stop(m_stream);
+    cubeb_stream_destroy(m_stream);
+    cubeb_destroy(m_ctx);
 }
 
-void player::sdl_callback(void* userdata, u8* stream, int len)
+long player::sound_callback(cubeb_stream* stream, void* user, const void* input, void* output_buffer, long nframes)
 {
-    int channels = 2;
-    int sample_size = 2;
-    int samples = (len / sample_size) / channels;
-    ((player*)userdata)->tick((s16_output*)stream, samples);
+    ((player*)user)->tick((s16_output*)output_buffer, nframes);
+    return nframes;
 }
+
+void player::state_callback(cubeb_stream* stream, void* user, cubeb_state state) {}
 
 void player::tick(s16_output* stream, int samples)
 {
@@ -77,6 +88,11 @@ void player::play_ame(MIDISound& sound, s32 vol, s32 pan)
 {
     auto header = (MultiMIDIBlockHeader*)m_loader.get_midi(sound.MIDIID);
     m_handlers.emplace_front(std::make_unique<ame_handler>(header, m_synth, (sound.Vol * vol) >> 10, sound.Pan, sound.Repeats, sound.VolGroup, m_loader));
+}
+
+void player::set_midi_reg(u8 reg, u8 value) {
+    auto h = (ame_handler*)m_handlers.front().get();
+    h->set_register(reg, value);
 }
 
 void player::play_sound(u32 bank_id, u32 sound_id)

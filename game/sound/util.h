@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: ISC
 #pragma once
 #include "types.h"
-#include <fmt/format.h>
+#include "third-party/fmt/format.h"
 #include <utility>
 
 namespace snd {

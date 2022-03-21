@@ -5,7 +5,7 @@
 #include "envelope.h"
 #include "fifo.h"
 #include "types.h"
-#include <fmt/core.h>
+#include "third-party/fmt/format.h"
 
 namespace snd {
 

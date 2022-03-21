@@ -121,6 +121,15 @@ set(RUNTIME_SOURCE
         graphics/texture/TextureConverter.cpp
         graphics/texture/TexturePool.cpp
         graphics/pipelines/opengl.cpp
+        sound/util.cpp
+        sound/ame_handler.h
+        sound/ame_handler.cpp
+        sound/synth.cpp
+        sound/envelope.cpp
+        sound/voice.cpp
+        sound/loader.cpp
+        sound/midi_handler.cpp
+        sound/player.cpp
         system/vm/dmac.cpp
         system/vm/vm.cpp)
 
@@ -149,7 +158,7 @@ write_svnrev_h()
 # we build the runtime as a static library.
 add_library(runtime STATIC ${RUNTIME_SOURCE} "../third-party/glad/src/glad.c")
 
-target_link_libraries(runtime common fmt glfw imgui discord-rpc)
+target_link_libraries(runtime common fmt glfw imgui discord-rpc cubeb)
 if(WIN32)
     target_link_libraries(runtime mman)
 else()
