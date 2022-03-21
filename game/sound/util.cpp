@@ -211,7 +211,7 @@ static u16 NotePitchTable[] = {
 
 static constexpr std::array<vol_pair, 361> genpan()
 {
-    std::array<vol_pair, 361> gPanTable;
+    std::array<vol_pair, 361> gPanTable{};
     for (int i = 0; i < 91; i++) {
         s32 opposing_front = ((i * 0x33ff) / 0x5a) + 0xc00;
 

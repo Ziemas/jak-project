@@ -1,12 +1,16 @@
 #include "sndshim.h"
+#include "game/sound/player.h"
 #include <cstdio>
 
+std::unique_ptr<snd::player> player;
 void snd_StartSoundSystem() {
-  // printf("snd_StartSoundSystem\n");
+  player = std::make_unique<snd::player>();
+
 }
 void snd_StopSoundSystem() {
-  // printf("snd_StopSoundSystem\n");
+  player.reset();
 }
+
 void snd_RegisterIOPMemAllocator(AllocFun, FreeFun) {
   // printf("snd_RegisterIOPMemAllocator\n");
 }
@@ -44,7 +48,7 @@ void snd_SetPlayBackMode(s32) {
 }
 s32 snd_SoundIsStillPlaying(s32) {
   // printf("snd_SoundIsStillPlaying\n");
-  return 0;
+  return 1;
 }
 void snd_StopSound(s32) {
   // printf("snd_StopSound\n");
@@ -68,12 +72,14 @@ void snd_PauseAllSoundsInGroup(u8) {
   // printf("snd_PauseAllSoundsInGroup\n");
 }
 
-void snd_SetMIDIRegister(s32, u8, u8) {
+void snd_SetMIDIRegister(s32 sound_handle, u8 reg, u8 value) {
+  player->set_midi_reg(reg, value);
+
   // printf("snd_SetMIDIRegister\n");
 }
 
-s32 snd_PlaySoundVolPanPMPB(s32, s32, s32, s32, s32, s32) {
-  // printf("snd_PlaySoundVolPanPMPB\n");
+s32 snd_PlaySoundVolPanPMPB(s32 bank, s32 sound, s32 vol, s32 pan, s32 pm, s32 pb) {
+  player->play_sound(bank, sound);
   return 0;
 }
 void snd_SetSoundPitchModifier(s32, s32) {
@@ -95,7 +101,8 @@ void snd_AutoPitchBend(s32, s32, s32, s32) {
   // printf("snd_AutoPitchBend\n");
 }
 
-s32 snd_BankLoadEx(const char*, s32, s32, s32) {
+s32 snd_BankLoadEx(const char* filename, s32 offset, s32, s32) {
   // printf("snd_BankLoadEx\n");
-  return 0;
+  std::filesystem::path path = filename;
+  return player->load_bank(path, offset);
 }

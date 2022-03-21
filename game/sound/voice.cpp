@@ -3,7 +3,6 @@
 #include "voice.h"
 #include "types.h"
 #include <array>
-#include <fmt/format.h>
 
 namespace snd {
 #include "interp_table.inc"
