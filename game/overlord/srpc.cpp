@@ -74,6 +74,8 @@ u32 Thread_Loader() {
 
 void* RPC_Player(unsigned int /*fno*/, void* data, int size) {
   if (gSoundEnable) {
+    VBlank_Handler();
+
     gFreeMem = QueryTotalFreeMemSize();
     // if (!PollSema(gSema)) {
     if (gMusic) {
