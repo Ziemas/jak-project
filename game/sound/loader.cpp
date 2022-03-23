@@ -1,8 +1,8 @@
-// Copyright: 2021 - 2021, Ziemas
+// Copyright: 2021 - 2022, Ziemas
 // SPDX-License-Identifier: ISC
 #include "loader.h"
-#include <fmt/format.h>
 #include <fstream>
+#include <third-party/fmt/core.h>
 
 namespace snd {
 enum chunk : u32 {

@@ -1,4 +1,4 @@
-// Copyright: 2021 - 2021, Ziemas
+// Copyright: 2021 - 2022, Ziemas
 // SPDX-License-Identifier: ISC
 #include "ame_handler.h"
 
@@ -26,7 +26,7 @@ bool ame_handler::tick()
 
     m_midis.remove_if([](std::unique_ptr<midi_handler>& m) { return m->complete(); });
 
-    return false;
+    return m_midis.empty();
 };
 
 void ame_handler::start_segment(u32 id)

@@ -1,4 +1,4 @@
-// Copyright: 2021 - 2021, Ziemas
+// Copyright: 2021 - 2022, Ziemas
 // SPDX-License-Identifier: ISC
 #pragma once
 #include "ame_handler.h"
@@ -32,6 +32,7 @@ public:
         m_tempo = block->Tempo;
         m_ppq = block->PPQ;
         m_chanvol.fill(0x7f);
+        m_chanpan.fill(0);
     };
 
     void start();

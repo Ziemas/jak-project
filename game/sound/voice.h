@@ -1,11 +1,11 @@
-// Copyright: 2021 - 2021, Ziemas
+// Copyright: 2021 - 2022, Ziemas
 // SPDX-License-Identifier: ISC
 #pragma once
 #include "bitfield.h"
 #include "envelope.h"
 #include "fifo.h"
 #include "types.h"
-#include "third-party/fmt/format.h"
+#include <third-party/fmt/core.h>
 
 namespace snd {
 
