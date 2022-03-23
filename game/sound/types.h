@@ -1,4 +1,4 @@
-// Copyright: 2021 - 2021, Ziemas
+// Copyright: 2021 - 2022, Ziemas
 // SPDX-License-Identifier: ISC
 #pragma once
 #include <algorithm>
@@ -53,5 +53,4 @@ struct s16_output {
         return *this;
     }
 };
-
 }

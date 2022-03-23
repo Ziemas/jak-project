@@ -1,9 +1,9 @@
-// Copyright: 2021 - 2021, Ziemas
+// Copyright: 2021 - 2022, Ziemas
 // SPDX-License-Identifier: ISC
 #include "midi_handler.h"
 #include "ame_handler.h"
 #include "util.h"
-#include "third-party/fmt/format.h"
+#include <third-party/fmt/core.h>
 #include <pthread.h>
 
 namespace snd {
@@ -63,7 +63,7 @@ void midi_handler::note_on()
         return;
     }
 
-    fmt::print("{:x} {}: [ch{:01x}] note on {:02x} {:02x}\n", (u64)this, m_time, channel, note, velocity);
+    //fmt::print("{:x} {}: [ch{:01x}] note on {:02x} {:02x}\n", (u64)this, m_time, channel, note, velocity);
 
     // Key on all the applicable tones for the program
     auto& bank = m_locator.get_bank(m_header->BankID);
@@ -72,12 +72,13 @@ void midi_handler::note_on()
     for (auto& t : program.tones) {
         if (note >= t.MapLow && note <= t.MapHigh) {
 
-            auto pan = m_chanpan[channel] + m_pan;
+            s16 pan = m_chanpan[channel] + m_pan;
             if (pan >= 360) {
                 pan -= 360;
             }
+
             // TODO passing m_pan here makes stuff sound bad, why?
-            auto volume = make_volume(m_vol, (velocity * m_chanvol[channel]) / 0x7f, t.Pan, program.d.Vol, program.d.Pan, t.Vol, t.Pan);
+            auto volume = make_volume(m_vol, (velocity * m_chanvol[channel]) / 0x7f, pan, program.d.Vol, program.d.Pan, t.Vol, t.Pan);
 
             m_synth.key_on(t, channel, note, volume, (u64)this, m_group);
         }

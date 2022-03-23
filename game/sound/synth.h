@@ -1,8 +1,9 @@
-// Copyright: 2021 - 2021, Ziemas
+// Copyright: 2021 - 2022, Ziemas
 // SPDX-License-Identifier: ISC
 #pragma once
 #include "types.h"
 #include "voice.h"
+#include "envelope.h"
 #include <forward_list>
 #include <memory>
 #include <unordered_map>
@@ -101,11 +102,17 @@ public:
     {
         m_master_vol.fill(0x400);
         m_group_duck.fill(0x10000);
+
+        m_Volume.left.Set(0x3FFF);
+        m_Volume.right.Set(0x3FFF);
     }
 
     s16_output tick();
     void key_on(Tone& tone, u8 channel, u8 note, vol_pair volume, u64 owner, u32 group);
     void key_off(u8 channel, u8 note, u64 owner);
+
+    void set_group_vol(u8 group, u32 volume);
+    void set_master_vol(u32 volume);
 
 private:
     std::array<s32, 32> m_master_vol;
@@ -113,6 +120,8 @@ private:
     locator& m_locator;
 
     std::forward_list<std::unique_ptr<voice>> m_voices;
+
+    VolumePair m_Volume {};
 
     s16 adjust_vol_to_group(s16 volume, int group);
 };

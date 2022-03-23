@@ -1,8 +1,8 @@
-// Copyright: 2021 - 2021, Ziemas
+// Copyright: 2021 - 2022, Ziemas
 // SPDX-License-Identifier: ISC
 #pragma once
 #include "types.h"
-#include "third-party/fmt/format.h"
+#include <third-party/fmt/core.h>
 #include <utility>
 
 namespace snd {
