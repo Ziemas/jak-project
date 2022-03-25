@@ -3,7 +3,7 @@
 #pragma once
 #include "common/common_types.h"
 #include "../989snd/locator.h"
-#include "util.h"
+#include "sound_types.h"
 #include "voice.h"
 #include "envelope.h"
 #include <forward_list>

@@ -6,12 +6,11 @@
 
 namespace snd {
 class sound_handler {
-public:
-    virtual ~sound_handler() = default;
-    virtual bool tick() = 0;
-    virtual u32 bank() = 0;
+ public:
+  virtual ~sound_handler() = default;
+  virtual bool tick() = 0;
+  virtual u32 bank() = 0;
 
-
-private:
+ private:
 };
-}
+}  // namespace snd

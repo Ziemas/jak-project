@@ -3,26 +3,11 @@
 #pragma once
 #include "common/common_types.h"
 #include "third-party/fmt/core.h"
+#include "../common/sound_types.h"
 #include <algorithm>
 #include <utility>
 
 namespace snd {
-
-struct vol_pair {
-  s16 left;
-  s16 right;
-};
-
-struct s16_output {
-  s16 left{0}, right{0};
-
-  s16_output& operator+=(const s16_output& rhs) {
-    left = static_cast<s16>(std::clamp<s32>(left + rhs.left, INT16_MIN, INT16_MAX));
-    right = static_cast<s16>(std::clamp<s32>(right + rhs.right, INT16_MIN, INT16_MAX));
-    return *this;
-  }
-};
-
 vol_pair make_volume(int sound_vol,
                      int velocity_volume,
                      int pan,

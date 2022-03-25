@@ -5,9 +5,9 @@ set(SOUND_SOURCES
   989snd/midi_handler.cpp
   989snd/ame_handler.cpp
   989snd/loader.cpp
+  989snd/util.cpp
   common/synth.cpp
   common/voice.cpp
-  common/util.cpp
   common/envelope.cpp
   sndshim.cpp
   )
