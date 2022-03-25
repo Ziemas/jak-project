@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: ISC
 #include "midi_handler.h"
 #include "ame_handler.h"
-#include "../common/util.h"
+#include "util.h"
 #include <fmt/core.h>
 #include <pthread.h>
 

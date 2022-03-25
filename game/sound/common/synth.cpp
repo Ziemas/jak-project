@@ -1,7 +1,7 @@
 // Copyright: 2021 - 2022, Ziemas
 // SPDX-License-Identifier: ISC
-#include "../common/synth.h"
-#include "util.h"
+#include "synth.h"
+#include "../989snd/util.h"
 
 namespace snd {
 

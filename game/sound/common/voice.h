@@ -4,9 +4,9 @@
 #include "bitfield.h"
 #include "envelope.h"
 #include "fifo.h"
-#include "util.h"
+#include "sound_types.h"
 #include "common/common_types.h"
-#include <fmt/core.h>
+#include "third-party/fmt/core.h"
 
 namespace snd {
 
