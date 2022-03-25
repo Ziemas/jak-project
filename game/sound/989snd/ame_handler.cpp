@@ -4,7 +4,7 @@
 
 namespace snd {
 
-ame_handler::ame_handler(MultiMIDIBlockHeader* block, synth& synth, s32 vol, s32 pan, s8 repeats, u32 group, locator& loc)
+ame_handler::ame_handler(MultiMIDIBlockHeader* block, synth& synth, s32 vol, s32 pan, s8 repeats, u32 group, locator& loc, u32 bank)
     : m_header(block)
     , m_locator(loc)
     , m_synth(synth)
@@ -12,10 +12,11 @@ ame_handler::ame_handler(MultiMIDIBlockHeader* block, synth& synth, s32 vol, s32
     , m_pan(pan)
     , m_repeats(repeats)
     , m_group(group)
+    , m_bank(bank)
 {
     auto firstblock = (MIDIBlockHeader*)(block->BlockPtr[0] + (uintptr_t)block);
 
-    m_midis.emplace_front(std::make_unique<midi_handler>(firstblock, synth, vol, pan, repeats, m_group, loc, this));
+    m_midis.emplace_front(std::make_unique<midi_handler>(firstblock, synth, vol, pan, repeats, m_group, loc, m_bank, this));
 };
 
 bool ame_handler::tick()
@@ -32,17 +33,16 @@ bool ame_handler::tick()
 void ame_handler::start_segment(u32 id)
 {
     auto midiblock = (MIDIBlockHeader*)(m_header->BlockPtr[id] + (uintptr_t)m_header);
-    fmt::print("starting segment {}\n", id);
-    m_midis.emplace_front(std::make_unique<midi_handler>(midiblock, m_synth, m_vol, m_pan, m_repeats, m_group, m_locator, this));
+    //fmt::print("starting segment {}\n", id);
+    m_midis.emplace_front(std::make_unique<midi_handler>(midiblock, m_synth, m_vol, m_pan, m_repeats, m_group, m_locator, m_bank, this));
 }
 
 void ame_handler::stop_segment(u32 id)
 {
-    fmt::print("stopping segment {}\n", id);
+    //fmt::print("stopping segment {}\n", id);
 }
 
 #define AME_BEGIN(op)                      \
-    fmt::print("ame trace: {:x}\n", (op)); \
     if (skip) {                            \
         if (skip == 1) {                   \
             skip = 0;                      \
@@ -87,13 +87,13 @@ std::pair<bool, u8*> ame_handler::run_ame(midi_handler& midi, u8* stream)
             AME_END(1)
         } break;
         case 0x4: {
-            fmt::print("ame trace 4\n");
+            //fmt::print("ame trace 4\n");
             if (skip == 1) {
                 skip = 2;
             }
         } break;
         case 0x5: {
-            fmt::print("ame trace 5\n");
+            //fmt::print("ame trace 5\n");
             if (skip == 2) {
                 skip = 0;
             }
@@ -113,7 +113,7 @@ std::pair<bool, u8*> ame_handler::run_ame(midi_handler& midi, u8* stream)
             AME_END(2)
         } break;
         case 0xB: {
-            fmt::print("ame trace b\n");
+            //fmt::print("ame trace b\n");
             m_macro[stream[0]] = &stream[1];
             while (*stream != 0xf7) {
                 stream++;
@@ -142,7 +142,7 @@ std::pair<bool, u8*> ame_handler::run_ame(midi_handler& midi, u8* stream)
             AME_END(1)
         } break;
         case 0xf: {
-            fmt::print("ame trace f\n");
+            //fmt::print("ame trace f\n");
             if (skip) {
                 while (*stream != 0x7f) {
                     stream++;
@@ -226,7 +226,7 @@ std::pair<bool, u8*> ame_handler::run_ame(midi_handler& midi, u8* stream)
         }
 
         if (*stream == 0xf7) {
-            fmt::print("ame done\n");
+            //fmt::print("ame done\n");
             stream++;
             done = true;
         }

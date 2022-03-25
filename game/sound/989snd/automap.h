@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: ISC
 #pragma once
 
-#include "types.h"
+#include "common/common_types.h"
 #include <queue>
 #include <unordered_map>
 
 namespace snd {
 
 template <typename type>
-class handler_map {
+class automap {
 public:
     using iterator = typename std::unordered_map<u32, type>::iterator;
 
@@ -32,18 +32,27 @@ public:
 
     iterator begin() { return m_map.begin(); }
     iterator end() { return m_map.end(); }
+
     iterator erase(iterator it)
     {
         free_id(it->first);
         return m_map.erase(it);
     };
 
+    size_t erase(const u32& key)
+    {
+
+        free_id(key);
+        return m_map.erase(key);
+    }
+
     type& at(const u32& key)
     {
         return m_map.at(key);
     }
 
-    iterator find(const u32& key) {
+    iterator find(const u32& key)
+    {
         return m_map.find(key);
     }
 
@@ -70,11 +79,4 @@ private:
     std::unordered_map<u32, type> m_map;
 };
 
-class sound_handler {
-public:
-    virtual ~sound_handler() = default;
-    virtual bool tick() = 0;
-
-private:
-};
 }

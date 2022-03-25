@@ -4,8 +4,9 @@
 #include "bitfield.h"
 #include "envelope.h"
 #include "fifo.h"
-#include "types.h"
-#include <third-party/fmt/core.h>
+#include "util.h"
+#include "common/common_types.h"
+#include <fmt/core.h>
 
 namespace snd {
 

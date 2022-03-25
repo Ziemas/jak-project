@@ -4,9 +4,9 @@
 #include "ame_handler.h"
 #include "loader.h"
 #include "sound_handler.h"
-#include "synth.h"
-#include "types.h"
-#include "voice.h"
+#include "../common/synth.h"
+#include "common/common_types.h"
+#include "../common/voice.h"
 #include <exception>
 #include <optional>
 #include <string>
@@ -17,7 +17,7 @@ class ame_handler;
 
 class midi_handler : public sound_handler {
 public:
-    midi_handler(MIDIBlockHeader* block, synth& synth, s32 vol, s32 pan, s8 repeats, u32 group, locator& loc, std::optional<ame_handler*> parent = std::nullopt)
+    midi_handler(MIDIBlockHeader* block, synth& synth, s32 vol, s32 pan, s8 repeats, u32 group, locator& loc, u32 bank, std::optional<ame_handler*> parent = std::nullopt)
         : m_parent(parent)
         , m_locator(loc)
         , m_vol(vol)
@@ -26,6 +26,7 @@ public:
         , m_header(block)
         , m_group(group)
         , m_synth(synth)
+        , m_bank(bank)
     {
         m_seq_data_start = (u8*)((uintptr_t)block + (uintptr_t)block->DataStart);
         m_seq_ptr = m_seq_data_start;
@@ -39,6 +40,7 @@ public:
     bool tick() override;
     void mute_channel(u8 channel);
     void unmute_channel(u8 channel);
+        u32 bank() {return m_bank;};
 
     bool complete() { return m_track_complete; };
 
@@ -67,6 +69,7 @@ private:
     s32 m_vol { 0x7f };
     s32 m_pan { 0 };
     s8 m_repeats { 0 };
+        u32 m_bank;
 
     MIDIBlockHeader* m_header { nullptr };
 

@@ -1,7 +1,7 @@
 // Copyright: 2021 - 2022, Ziemas
 // SPDX-License-Identifier: ISC
 #include "player.h"
-#include <third-party/fmt/core.h>
+#include <fmt/core.h>
 #include <fstream>
 
 namespace snd {
@@ -85,26 +85,28 @@ void player::tick(s16_output* stream, int samples)
     }
 }
 
-u32 player::play_midi(MIDISound& sound, s32 vol, s32 pan)
+u32 player::play_midi(u32 bank, MIDISound& sound, s32 vol, s32 pan)
 {
+    std::scoped_lock lock(m_ticklock);
     s32 lpan = pan;
     if (pan == -1 || pan == -2) {
         lpan = sound.Pan;
     }
 
     auto header = (MIDIBlockHeader*)m_loader.get_midi(sound.MIDIID);
-    return m_handlers.emplace(std::make_unique<midi_handler>(header, m_synth, (sound.Vol * vol) >> 10, lpan, sound.Repeats, sound.VolGroup, m_loader));
+    return m_handlers.emplace(std::make_unique<midi_handler>(header, m_synth, (sound.Vol * vol) >> 10, lpan, sound.Repeats, sound.VolGroup, m_loader, bank));
 }
 
-u32 player::play_ame(MIDISound& sound, s32 vol, s32 pan)
+u32 player::play_ame(u32 bank, MIDISound& sound, s32 vol, s32 pan)
 {
+    std::scoped_lock lock(m_ticklock);
     s32 lpan = pan;
     if (pan == -1 || pan == -2) {
         lpan = sound.Pan;
     }
 
     auto header = (MultiMIDIBlockHeader*)m_loader.get_midi(sound.MIDIID);
-    return m_handlers.emplace(std::make_unique<ame_handler>(header, m_synth, (sound.Vol * vol) >> 10, lpan, sound.Repeats, sound.VolGroup, m_loader));
+    return m_handlers.emplace(std::make_unique<ame_handler>(header, m_synth, (sound.Vol * vol) >> 10, lpan, sound.Repeats, sound.VolGroup, m_loader, bank));
 }
 
 u32 player::play_sound(u32 bank_id, u32 sound_id)
@@ -118,10 +120,10 @@ u32 player::play_sound(u32 bank_id, u32 sound_id)
 
         switch (sound.Type) {
         case 4: { // normal MIDI
-            return play_midi(sound, 0x400, 0);
+            return play_midi(bank_id, sound, 0x400, 0);
         } break;
         case 5: { // AME
-            return play_ame(sound, 0x400, 0);
+            return play_ame(bank_id, sound, 0x400, 0);
         } break;
         default:
             fmt::print("Unhandled sound type {}\n", sound.Type);
@@ -132,10 +134,20 @@ u32 player::play_sound(u32 bank_id, u32 sound_id)
         m_ticklock.unlock();
         return 0;
     }
+
+    return 0;
+}
+
+void player::stop_sound(u32 sound_handle)
+{
+    std::scoped_lock lock(m_ticklock);
+    m_handlers.erase(sound_handle);
+
 }
 
 void player::set_midi_reg(u32 sound_id, u8 reg, u8 value)
 {
+    std::scoped_lock lock(m_ticklock);
     try {
         auto* handler = (ame_handler*)m_handlers.at(sound_id).get();;
         handler->set_register(reg, value);
@@ -145,6 +157,7 @@ void player::set_midi_reg(u32 sound_id, u8 reg, u8 value)
 }
 
 bool player::sound_still_active(u32 sound_id) {
+    std::scoped_lock lock(m_ticklock);
     if (m_handlers.find(sound_id) == m_handlers.end())
         return false;
 
@@ -152,6 +165,7 @@ bool player::sound_still_active(u32 sound_id) {
 }
 
 void player::set_master_volume(u32 group, s32 volume) {
+    std::scoped_lock lock(m_ticklock);
     if (volume > 0x400)
         volume = 0x400;
 
@@ -163,14 +177,31 @@ void player::set_master_volume(u32 group, s32 volume) {
     }
 }
 
-
 u32 player::load_bank(std::filesystem::path& filepath, size_t offset)
 {
+    std::scoped_lock lock(m_ticklock);
     fmt::print("Loading bank {}\n", filepath.c_str());
     std::fstream in(filepath, std::fstream::binary | std::fstream::in);
     in.seekg(offset, std::fstream::beg);
 
     return m_loader.read_bank(in);
+}
+
+void player::unload_bank(u32 bank_handle)
+{
+    std::scoped_lock lock(m_ticklock);
+    auto &bank = m_loader.get_bank(bank_handle);
+
+    //stop_sound(u32 sound_handle)
+
+    for (auto it = m_handlers.begin(); it != m_handlers.end();) {
+        if (it->second->bank() == bank_handle){
+            it = m_handlers.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
 }
 
 }

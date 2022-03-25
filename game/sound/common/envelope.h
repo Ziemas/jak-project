@@ -3,7 +3,7 @@
 #pragma once
 
 #include "bitfield.h"
-#include "types.h"
+#include "common/common_types.h"
 
 namespace snd {
 union ADSRReg {

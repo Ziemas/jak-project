@@ -4,8 +4,8 @@
 #include "loader.h"
 #include "midi_handler.h"
 #include "sound_handler.h"
-#include "synth.h"
-#include "types.h"
+#include "../common/synth.h"
+#include "common/common_types.h"
 #include <array>
 #include <forward_list>
 
@@ -16,8 +16,9 @@ class ame_handler : public sound_handler {
     friend class midi_handler;
 
 public:
-    ame_handler(MultiMIDIBlockHeader* block, synth& synth, s32 vol, s32 pan, s8 repeats, u32 group, locator& loc);
+    ame_handler(MultiMIDIBlockHeader* block, synth& synth, s32 vol, s32 pan, s8 repeats, u32 group, locator& loc, u32 bank);
     bool tick() override;
+    u32 bank() override { return m_bank; };
 
     void set_register(u8 reg, u8 value)
     {
@@ -53,6 +54,8 @@ private:
     void start_segment(u32 id);
     void stop_segment(u32 id);
     std::pair<bool, u8*> run_ame(midi_handler&, u8* stream);
+
+    u32 m_bank;
 
     MultiMIDIBlockHeader* m_header { nullptr };
     locator& m_locator;
