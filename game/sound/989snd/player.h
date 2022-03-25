@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: ISC
 #pragma once
 #include "ame_handler.h"
-#include "cubeb/cubeb.h"
+#include "third-party/cubeb/cubeb/include/cubeb/cubeb.h"
 #include "midi_handler.h"
 #include "sound_handler.h"
 #include "loader.h"
-#include "synth.h"
-#include "types.h"
+#include "../common/synth.h"
+#include "common/common_types.h"
+#include "automap.h"
 #include <filesystem>
 #include <unordered_map>
 #include <memory>
@@ -33,14 +34,15 @@ public:
     void set_midi_reg(u32 sound_id, u8 reg, u8 value);
     bool sound_still_active(u32 sound_id);
     void set_master_volume(u32 group, s32 volume);
+    void unload_bank(u32 bank_handle);
+    void stop_sound(u32 sound_handle);
 
 private:
     std::recursive_mutex m_ticklock; // TODO does not need to recursive with some light restructuring
-    //std::unordered_map<u32, std::unique_ptr<sound_handler>> m_handlers;
-    handler_map<std::unique_ptr<sound_handler>> m_handlers;
+    automap<std::unique_ptr<sound_handler>> m_handlers;
 
-    u32 play_midi(MIDISound& sound, s32 vol, s32 pan);
-    u32 play_ame(MIDISound& sound, s32 vol, s32 pan);
+    u32 play_midi(u32 bank, MIDISound& sound, s32 vol, s32 pan);
+    u32 play_ame(u32 bank, MIDISound& sound, s32 vol, s32 pan);
     void tick(s16_output* stream, int samples);
 
     loader m_loader;

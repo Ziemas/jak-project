@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: ISC
 #include "loader.h"
 #include <fstream>
-#include <third-party/fmt/core.h>
+#include <fmt/core.h>
 
 namespace snd {
 enum chunk : u32 {
@@ -150,6 +150,22 @@ u16* loader::get_bank_samples(u32 id)
 void loader::load_samples(u32 bank, std::unique_ptr<u8[]> samples)
 {
     m_bank_samples.emplace(bank, std::move(samples));
+}
+
+void loader::unload_bank(u32 id)
+{
+    for (auto it = m_midi_chunks.begin(); it != m_midi_chunks.end();) {
+        bool del = false;
+
+        if (del) {
+            it = m_midi_chunks.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    m_bank_samples.erase(id);
+    m_soundbanks.erase(id);
 }
 
 }

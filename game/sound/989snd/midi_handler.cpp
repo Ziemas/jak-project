@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: ISC
 #include "midi_handler.h"
 #include "ame_handler.h"
-#include "util.h"
-#include <third-party/fmt/core.h>
+#include "../common/util.h"
+#include <fmt/core.h>
 #include <pthread.h>
 
 namespace snd {
@@ -37,13 +37,13 @@ std::pair<size_t, u32> midi_handler::read_vlq(u8* value)
 
 void midi_handler::mute_channel(u8 channel)
 {
-    fmt::print("{:x} ame muting channel {}\n", (u64)this, channel);
+    //fmt::print("{:x} ame muting channel {}\n", (u64)this, channel);
     m_mute_state[channel] = true;
 }
 
 void midi_handler::unmute_channel(u8 channel)
 {
-    fmt::print("{:x} ame unmuting channel {}\n", (u64)this, channel);
+    //fmt::print("{:x} ame unmuting channel {}\n", (u64)this, channel);
     m_mute_state[channel] = false;
 }
 

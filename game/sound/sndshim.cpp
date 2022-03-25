@@ -1,5 +1,5 @@
 #include "sndshim.h"
-#include "game/sound/player.h"
+#include "989snd/player.h"
 #include <cstdio>
 
 std::unique_ptr<snd::player> player;
@@ -53,15 +53,15 @@ void snd_StopSound(s32) {
   printf("snd_StopSound\n");
 }
 void snd_SetSoundVolPan(s32, s32, s32) {
-  printf("snd_SetSoundVolPan\n");
+  //printf("snd_SetSoundVolPan\n");
 }
 void snd_SetMasterVolume(s32 group, s32 volume) {
-  printf("setting group %d to %d\n", group, volume);
+  //printf("setting group %d to %d\n", group, volume);
 
   player->set_master_volume(group, volume);
 }
-void snd_UnloadBank(s32) {
-  printf("snd_UnloadBank\n");
+void snd_UnloadBank(s32 bank_handle) {
+  player->unload_bank(bank_handle);
 }
 void snd_ResolveBankXREFS() {
   printf("snd_ResolveBankXREFS\n");
