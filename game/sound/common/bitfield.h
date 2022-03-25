@@ -6,18 +6,16 @@
  * should be allowed as per common initial subsequence rule regarding unions */
 template <typename sourcetype, typename type, int pos, int width>
 class bitfield {
-  public:
-    constexpr type get() {
-        return static_cast<type>((underlying >> pos) & mask());
-    };
+ public:
+  constexpr type get() { return static_cast<type>((underlying >> pos) & mask()); };
 
-    constexpr void set(type value) {
-        underlying &= ~(mask() << pos);
-        underlying |= (value & mask()) << pos;
-    };
+  constexpr void set(type value) {
+    underlying &= ~(mask() << pos);
+    underlying |= (value & mask()) << pos;
+  };
 
-  private:
-    sourcetype underlying;
+ private:
+  sourcetype underlying;
 
-    constexpr int mask() { return (1 << width) - 1; };
+  constexpr int mask() { return (1 << width) - 1; };
 };
