@@ -5,7 +5,6 @@
 std::unique_ptr<snd::player> player;
 void snd_StartSoundSystem() {
   player = std::make_unique<snd::player>();
-
 }
 void snd_StopSoundSystem() {
   player.reset();
@@ -32,7 +31,7 @@ void snd_SetMixerMode(s32, s32) {
   printf("snd_SetMixerMode\n");
 }
 void snd_SetGroupVoiceRange(s32, s32, s32) {
-   printf("snd_SetGroupVoiceRange\n");
+  printf("snd_SetGroupVoiceRange\n");
 }
 void snd_SetReverbDepth(s32, s32, s32) {
   printf("snd_SetReverbDepth\n");
@@ -53,10 +52,10 @@ void snd_StopSound(s32) {
   printf("snd_StopSound\n");
 }
 void snd_SetSoundVolPan(s32, s32, s32) {
-  //printf("snd_SetSoundVolPan\n");
+  // printf("snd_SetSoundVolPan\n");
 }
 void snd_SetMasterVolume(s32 group, s32 volume) {
-  //printf("setting group %d to %d\n", group, volume);
+  // printf("setting group %d to %d\n", group, volume);
 
   player->set_master_volume(group, volume);
 }
