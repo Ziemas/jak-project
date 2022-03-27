@@ -41,16 +41,18 @@ player::~player() {
   cubeb_destroy(m_ctx);
 }
 
-long player::sound_callback(cubeb_stream* stream,
+long player::sound_callback([[maybe_unused]] cubeb_stream* stream,
                             void* user,
-                            const void* input,
+                            [[maybe_unused]] const void* input,
                             void* output_buffer,
                             long nframes) {
   ((player*)user)->tick((s16_output*)output_buffer, nframes);
   return nframes;
 }
 
-void player::state_callback(cubeb_stream* stream, void* user, cubeb_state state) {}
+void player::state_callback([[maybe_unused]] cubeb_stream* stream,
+                            [[maybe_unused]] void* user,
+                            [[maybe_unused]] cubeb_state state) {}
 
 void player::tick(s16_output* stream, int samples) {
   std::scoped_lock lock(m_ticklock);
@@ -84,59 +86,17 @@ void player::tick(s16_output* stream, int samples) {
   }
 }
 
-u32 player::play_midi(u32 bank, MIDISound& sound, s32 vol, s32 pan) {
+u32 player::play_sound(u32 bank_id, u32 sound_id, s32 vol, s32 pan, s32 pm, s32 pb) {
   std::scoped_lock lock(m_ticklock);
-  s32 lpan = pan;
-  if (pan == -1 || pan == -2) {
-    lpan = sound.Pan;
-  }
-
-  auto header = (MIDIBlockHeader*)m_loader.get_midi(sound.MIDIID);
-  return m_handlers.emplace(std::make_unique<midi_handler>(header, m_synth, (sound.Vol * vol) >> 10,
-                                                           lpan, sound.Repeats, sound.VolGroup,
-                                                           m_loader, bank));
-}
-
-u32 player::play_ame(u32 bank, MIDISound& sound, s32 vol, s32 pan) {
-  std::scoped_lock lock(m_ticklock);
-  s32 lpan = pan;
-  if (pan == -1 || pan == -2) {
-    lpan = sound.Pan;
-  }
-
-  auto header = (MultiMIDIBlockHeader*)m_loader.get_midi(sound.MIDIID);
-  return m_handlers.emplace(std::make_unique<ame_handler>(header, m_synth, (sound.Vol * vol) >> 10,
-                                                          lpan, sound.Repeats, sound.VolGroup,
-                                                          m_loader, bank));
-}
-
-u32 player::play_sound(u32 bank_id, u32 sound_id) {
-  std::scoped_lock lock(m_ticklock);
-  try {
-    auto& bank = m_loader.get_bank(bank_id);
-    auto& sound = bank.sounds.at(sound_id);
-
-    fmt::print("playing sound: {}, type: {}, MIDI: {:.4}\n", sound.Index, sound.Type,
-               (char*)&sound.MIDIID);
-
-    switch (sound.Type) {
-      case 4: {  // normal MIDI
-        return play_midi(bank_id, sound, 0x400, 0);
-      } break;
-      case 5: {  // AME
-        return play_ame(bank_id, sound, 0x400, 0);
-      } break;
-      default:
-        fmt::print("Unhandled sound type {}\n", sound.Type);
-    }
-
-  } catch (std::out_of_range& e) {
-    fmt::print("play_sound: requested bank or sound not found\n");
-    m_ticklock.unlock();
+  auto bank = m_loader.get_bank_by_handle(bank_id);
+  if (bank == nullptr) {
+    fmt::print("play_sound: Bank {} does not exist", bank_id);
     return 0;
   }
 
-  return 0;
+  u32 handle = m_handlers.emplace(bank->make_handler(m_synth, sound_id, vol, pan));
+
+  return handle;
 }
 
 void player::stop_sound(u32 sound_handle) {
@@ -146,13 +106,13 @@ void player::stop_sound(u32 sound_handle) {
 
 void player::set_midi_reg(u32 sound_id, u8 reg, u8 value) {
   std::scoped_lock lock(m_ticklock);
-  try {
-    auto* handler = (ame_handler*)m_handlers.at(sound_id).get();
-    ;
-    handler->set_register(reg, value);
-  } catch (std::out_of_range& e) {
-    fmt::print("set_midi_reg called on non-existant handler\n");
+  if (m_handlers.find(sound_id) == m_handlers.end()) {
+    fmt::print("set_midi_reg: Handler {} does not exist", sound_id);
+    return;
   }
+
+  auto* handler = (ame_handler*)m_handlers.at(sound_id).get();
+  handler->set_register(reg, value);
 }
 
 bool player::sound_still_active(u32 sound_id) {
@@ -187,7 +147,7 @@ u32 player::load_bank(std::filesystem::path& filepath, size_t offset) {
 
 void player::unload_bank(u32 bank_handle) {
   std::scoped_lock lock(m_ticklock);
-  auto& bank = m_loader.get_bank(bank_handle);
+  auto* bank = m_loader.get_bank_by_handle(bank_handle);
 
   // stop_sound(u32 sound_handle)
 

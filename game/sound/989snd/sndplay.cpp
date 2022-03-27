@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
 
   if (argc > 1) {
     bankid = player.load_bank(file, 0);
-    unsigned sound = player.play_sound(bankid, 0);
+    unsigned sound = player.play_sound(bankid, 0, 0x400, 0, 0, 0);
     fmt::print("sound {} started\n", sound);
   }
 
@@ -20,19 +20,6 @@ int main(int argc, char* argv[]) {
       break;
     }
   }
-
-  // for (auto& b : gBanks) {
-  //     fmt::print("Bank {:.4}\n", (char*)&b.data.BankID);
-
-  //    fmt::print("Songs:\n");
-  //    for (auto& s : b.sounds) {
-  //        fmt::print("type {}\n", s.Type);
-  //        fmt::print("bank {:.4}\n", (char*)&s.Bank);
-  //        fmt::print("midi {:.4}\n", (char*)&s.MIDIID);
-  //        fmt::print("unk {:.4}\n", (char*)&s.OrigBank);
-  //        fmt::print("{}\n", s.Index);
-  //    }
-  //}
 
   return 0;
 }

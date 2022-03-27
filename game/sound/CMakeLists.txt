@@ -4,6 +4,7 @@ set(SOUND_SOURCES
   989snd/player.cpp
   989snd/midi_handler.cpp
   989snd/ame_handler.cpp
+  989snd/musicbank.cpp
   989snd/loader.cpp
   989snd/util.cpp
   common/synth.cpp

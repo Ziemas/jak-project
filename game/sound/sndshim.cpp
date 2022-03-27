@@ -77,7 +77,7 @@ void snd_SetMIDIRegister(s32 sound_handle, u8 reg, u8 value) {
 }
 
 s32 snd_PlaySoundVolPanPMPB(s32 bank, s32 sound, s32 vol, s32 pan, s32 pm, s32 pb) {
-  return player->play_sound(bank, sound);
+  return player->play_sound(bank, sound, vol, pan, pm, pb);
 }
 void snd_SetSoundPitchModifier(s32, s32) {
   printf("snd_SetSoundPitchModifier\n");
