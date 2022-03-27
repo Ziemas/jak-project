@@ -20,12 +20,6 @@ class automap {
     return id;
   }
 
-  u32 emplace(type item) {
-    u32 id = get_id();
-    m_map.emplace(id, item);
-    return id;
-  }
-
   size_t size() { return m_map.size(); }
 
   iterator begin() { return m_map.begin(); }
@@ -44,6 +38,8 @@ class automap {
   type& at(const u32& key) { return m_map.at(key); }
 
   iterator find(const u32& key) { return m_map.find(key); }
+
+  type& operator[](const u32& key) { return m_map[key]; }
 
  private:
   u32 get_id() {

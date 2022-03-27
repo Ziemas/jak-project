@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: ISC
 #include "loader.h"
 #include <fstream>
+#include <optional>
 #include <fmt/core.h>
 
 namespace snd {
@@ -11,12 +12,12 @@ enum chunk : u32 { bank, samples, midi };
 
 u32 loader::read_music_bank(SoundBankData* data) {
   fmt::print("Loading music bank {:.4}\n", (char*)&data->BankID);
-  SoundBank bank;
-  bank.d = *data;
+  auto bank = std::make_unique<MusicBank>(*this);
+  bank->d = *data;
 
   auto sound = (MIDISound*)((uintptr_t)data + data->FirstSound);
   for (int i = 0; i < data->NumSounds; i++) {
-    bank.sounds.emplace_back(sound[i]);
+    bank->sounds.emplace_back(sound[i]);
     fmt::print("Adding sound {:.4s}\n", (char*)&sound->MIDIID);
   }
 
@@ -25,14 +26,14 @@ u32 loader::read_music_bank(SoundBankData* data) {
     Prog prog;
     prog.d = progdata[i];
     fmt::print("prog {}, {} tones first: {}\n", i, prog.d.NumTones, prog.d.FirstTone);
-    bank.programs.emplace_back(std::move(prog));
+    bank->programs.emplace_back(std::move(prog));
   }
 
-  for (auto& prog : bank.programs) {
+  for (auto& prog : bank->programs) {
     auto tonedata = (Tone*)((uintptr_t)data + prog.d.FirstTone);
     for (int i = 0; i < prog.d.NumTones; i++) {
       Tone tone = tonedata[i];
-      tone.BankID = bank.d.BankID;
+      tone.BankID = bank->d.BankID;
       // I like to think of SPU ram in terms of shorts, since that's the least addressable unit on
       // it.
       tone.VAGInSR >>= 1;
@@ -41,18 +42,19 @@ u32 loader::read_music_bank(SoundBankData* data) {
     }
   }
 
-  fmt::print("loaded {} programs and their tones\n", bank.programs.size());
+  fmt::print("loaded {} programs and their tones\n", bank->programs.size());
 
-  u32 bank_id = bank.d.BankID;
-  m_soundbanks.emplace(bank_id, std::move(bank));
-  return bank_id;
+  bank->type = BankType::Music;
+  return m_soundbanks.emplace(std::move(bank));
 }
 
 u32 loader::read_sfx_bank(SFXBlockData* data) {
+  fmt::print("Loading sfx bank\n");
   return 0;
 }
 
 u32 loader::read_bank(std::fstream& in) {
+  size_t origin = in.tellg();
   FileAttributes<3> attr;
   in.read((char*)(&attr), sizeof(attr));
 
@@ -79,6 +81,7 @@ u32 loader::read_bank(std::fstream& in) {
 
   auto pos = in.tellg();
   auto bank_buf = std::make_unique<u8[]>(attr.where[chunk::bank].size);
+  in.seekg(origin + attr.where[chunk::bank].offset, std::fstream::beg);
   in.read((char*)bank_buf.get(), attr.where[chunk::bank].size);
   auto bank = (BankTag*)bank_buf.get();
 
@@ -93,14 +96,16 @@ u32 loader::read_bank(std::fstream& in) {
   }
 
   if (attr.num_chunks >= 2) {
-    in.seekg(attr.where[chunk::samples].offset, std::fstream::beg);
+    auto *bank = static_cast<MusicBank*>(m_soundbanks[bank_id].get());
+
+    in.seekg(origin + attr.where[chunk::samples].offset, std::fstream::beg);
     auto samples = std::make_unique<u8[]>(attr.where[chunk::samples].size);
     in.read((char*)samples.get(), attr.where[chunk::samples].size);
-    load_samples(bank_id, std::move(samples));
+    load_samples(bank->d.BankID/*bank_id*/, std::move(samples));
   }
 
   if (attr.num_chunks >= 3) {
-    in.seekg(attr.where[chunk::midi].offset, std::fstream::beg);
+    in.seekg(origin + attr.where[chunk::midi].offset, std::fstream::beg);
     load_midi(in);
   }
 
@@ -124,8 +129,25 @@ void loader::load_midi(std::fstream& in) {
   m_midi_chunks.emplace_back(std::move(midi));
 }
 
-SoundBank& loader::get_bank(u32 id) {
-  return m_soundbanks.at(id);
+SoundBank* loader::get_bank_by_handle(u32 id) {
+  if (m_soundbanks.find(id) == m_soundbanks.end()) {
+    return nullptr;
+  }
+
+  return m_soundbanks[id].get();
+}
+
+MusicBank* loader::get_bank_by_name(u32 id) {
+  for (auto& b : m_soundbanks) {
+    if (b.second->type == BankType::Music) {
+      auto* bank = static_cast<MusicBank*>(b.second.get());
+      if (bank->d.BankID == id) {
+        return bank;
+      }
+    }
+  }
+
+  return nullptr;
 }
 
 MIDIBlock* loader::get_midi(u32 id) {

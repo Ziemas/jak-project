@@ -63,8 +63,8 @@ void midi_handler::note_on() {
   // velocity);
 
   // Key on all the applicable tones for the program
-  auto& bank = m_locator.get_bank(m_header->BankID);
-  auto& program = bank.programs[m_programs[channel]];
+  auto bank = dynamic_cast<MusicBank*>(m_locator.get_bank_by_name(m_header->BankID));
+  auto& program = bank->programs[m_programs[channel]];
 
   for (auto& t : program.tones) {
     if (note >= t.MapLow && note <= t.MapHigh) {

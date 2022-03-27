@@ -31,10 +31,10 @@ class midi_handler : public sound_handler {
         m_vol(vol),
         m_pan(pan),
         m_repeats(repeats),
+        m_bank(bank),
         m_header(block),
         m_group(group),
-        m_synth(synth),
-        m_bank(bank) {
+        m_synth(synth) {
     m_seq_data_start = (u8*)((uintptr_t)block + (uintptr_t)block->DataStart);
     m_seq_ptr = m_seq_data_start;
     m_tempo = block->Tempo;
