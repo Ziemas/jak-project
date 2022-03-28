@@ -50,7 +50,36 @@ u32 loader::read_music_bank(SoundBankData* data) {
 
 u32 loader::read_sfx_bank(SFXBlockData* data) {
   fmt::print("Loading sfx bank\n");
-  return 0;
+  auto bank = std::make_unique<SFXBlock>(*this);
+  bank->d = *data;
+
+  auto sounddata = (SFXData*)((uintptr_t)data + data->FirstSound);
+  for (int i = 0; i < data->NumSounds; i++) {
+    SFX sound;
+    sound.d = sounddata[i];
+    bank->sounds.push_back(sound);
+    fmt::print("Adding sound\n");
+    fmt::print("\t vol {}\n", sounddata[i].Vol);
+    fmt::print("\t volgroup {}\n", sounddata[i].VolGroup);
+    fmt::print("\t pan {}\n", sounddata[i].Pan);
+    fmt::print("\t grains {}\n", sounddata[i].NumGrains);
+    fmt::print("\t limit {}\n", sounddata[i].InstanceLimit);
+    fmt::print("\t flags {}\n", sounddata[i].Flags);
+    fmt::print("\t firstgrain {}\n", sounddata[i].FirstGrain);
+  }
+
+  for (auto& sound : bank->sounds) {
+    auto graindata = (SFXGrain*)((uintptr_t)data + data->FirstGrain + sound.d.FirstGrain);
+    for (int i = 0; i < sound.d.NumGrains; i++) {
+      SFXGrain grain = graindata[i];
+      sound.grains.push_back(grain);
+      fmt::print("type {}\n", graindata[i].Type);
+      fmt::print("delay {}\n", graindata[i].Delay);
+    }
+  }
+
+  bank->type == BankType::SFX;
+  return m_soundbanks.emplace(std::move(bank));
 }
 
 u32 loader::read_bank(std::fstream& in) {
@@ -96,12 +125,10 @@ u32 loader::read_bank(std::fstream& in) {
   }
 
   if (attr.num_chunks >= 2) {
-    auto *bank = static_cast<MusicBank*>(m_soundbanks[bank_id].get());
-
     in.seekg(origin + attr.where[chunk::samples].offset, std::fstream::beg);
     auto samples = std::make_unique<u8[]>(attr.where[chunk::samples].size);
     in.read((char*)samples.get(), attr.where[chunk::samples].size);
-    load_samples(bank->d.BankID/*bank_id*/, std::move(samples));
+    load_samples(bank_id, std::move(samples));
   }
 
   if (attr.num_chunks >= 3) {

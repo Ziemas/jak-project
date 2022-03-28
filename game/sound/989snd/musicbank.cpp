@@ -19,7 +19,6 @@ std::unique_ptr<sound_handler> MusicBank::make_handler(synth& synth,
     auto midi = static_cast<MultiMIDIBlockHeader*>(m_locator.get_midi(sound.MIDIID));
     handler = std::make_unique<ame_handler>(midi, synth, (sound.Vol * vol) >> 10, pan,
                                              sound.Repeats, sound.VolGroup, m_locator, d.BankID);
-
   } else {
     // error
   }

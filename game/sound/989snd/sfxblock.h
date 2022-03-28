@@ -14,13 +14,16 @@ struct SFXBlockData : BankTag {
   /*  1a */ s16 NumVAGs;
   /*  1c */ u32 FirstSound;
   /*  20 */ u32 FirstGrain;
-  /*  24 */ void* VagsInSR;
+  /*  24 */ u32 VagsInSR;
   /*  28 */ u32 VagDataSize;
   /*  2c */ u32 SRAMAllocSize;
   /*  30 */ u32 NextBlock;
   /*  34 */ u32 BlockNames;
   /*  38 */ u32 SFXUD;
 };
+
+static_assert(sizeof(SFXBlockData) == 0x38 + 4);
+
 struct XREFGrainParams {
   /*   0 */ u32 BankID;
   /*   4 */ u32 SoundIndex;
@@ -66,6 +69,10 @@ struct LargestGrainParamStruct {
   /*   0 */ char blank[32];
 };
 
+/*
+** Type 1 = Tone
+*/
+
 struct SFXGrain {
   /*   0 */ u32 Type;
   /*   4 */ s32 Delay;
@@ -81,7 +88,7 @@ struct SFXGrain {
   } GrainParams;
 };
 
-struct SFX {
+struct SFXData {
   /*   0 */ s8 Vol;
   /*   1 */ s8 VolGroup;
   /*   2 */ s16 Pan;
@@ -91,10 +98,18 @@ struct SFX {
   /*   8 */ u32 FirstGrain;
 };
 
+struct SFX {
+  SFXData d;
+  std::vector<SFXGrain> grains;
+};
+
 class SFXBlock : public SoundBank {
  public:
   SFXBlock(locator& loc) : m_locator(loc) {}
-  std::unique_ptr<sound_handler> make_handler(synth& synth, u32 sound_id, s32 vol, s32 pan) override;
+  std::unique_ptr<sound_handler> make_handler(synth& synth,
+                                              u32 sound_id,
+                                              s32 vol,
+                                              s32 pan) override;
 
   // FIXME lets private stuff
   SFXBlockData d;
