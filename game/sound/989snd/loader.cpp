@@ -73,12 +73,10 @@ u32 loader::read_sfx_bank(SFXBlockData* data) {
     for (int i = 0; i < sound.d.NumGrains; i++) {
       SFXGrain grain = graindata[i];
       sound.grains.push_back(grain);
-      fmt::print("type {}\n", graindata[i].Type);
-      fmt::print("delay {}\n", graindata[i].Delay);
     }
   }
 
-  bank->type == BankType::SFX;
+  bank->type = BankType::SFX;
   return m_soundbanks.emplace(std::move(bank));
 }
 
