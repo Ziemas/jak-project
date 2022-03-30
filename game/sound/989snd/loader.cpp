@@ -65,20 +65,23 @@ u32 loader::read_sfx_bank(SFXBlockData* data) {
     SFX sound;
     sound.d = sounddata[i];
     bank->sounds.push_back(sound);
-    fmt::print("Adding sound\n");
-    fmt::print("\t vol {}\n", sounddata[i].Vol);
-    fmt::print("\t volgroup {}\n", sounddata[i].VolGroup);
-    fmt::print("\t pan {}\n", sounddata[i].Pan);
-    fmt::print("\t grains {}\n", sounddata[i].NumGrains);
-    fmt::print("\t limit {}\n", sounddata[i].InstanceLimit);
-    fmt::print("\t flags {}\n", sounddata[i].Flags);
-    fmt::print("\t firstgrain {}\n", sounddata[i].FirstGrain);
-  }
+ }
 
   for (auto& sound : bank->sounds) {
     auto graindata = (SFXGrain*)((uintptr_t)data + data->FirstGrain + sound.d.FirstGrain);
+    fmt::print("Adding sound\n");
+    fmt::print("\t vol {}\n", sound.d.Vol);
+    fmt::print("\t volgroup {}\n", sound.d.VolGroup);
+    fmt::print("\t pan {}\n", sound.d.Pan);
+    fmt::print("\t grains {}\n", sound.d.NumGrains);
+    fmt::print("\t limit {}\n", sound.d.InstanceLimit);
+    fmt::print("\t flags {}\n", sound.d.Flags);
+
     for (int i = 0; i < sound.d.NumGrains; i++) {
       SFXGrain grain = graindata[i];
+      fmt::print("\t\t Grain {}:\n", i);
+      fmt::print("\t\t Type {}\n", grain.Type);
+      fmt::print("\t\t Delay {}\n", grain.Delay);
       sound.grains.push_back(grain);
     }
   }
