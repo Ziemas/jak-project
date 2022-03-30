@@ -90,13 +90,19 @@ void player::tick(s16_output* stream, int samples) {
 u32 player::play_sound(u32 bank_id, u32 sound_id, s32 vol, s32 pan, s32 pm, s32 pb) {
   std::scoped_lock lock(m_ticklock);
   auto bank = m_loader.get_bank_by_handle(bank_id);
+  fmt::print("play_sound {}:{}\n", bank_id, sound_id);
   if (bank == nullptr) {
-    fmt::print("play_sound: Bank {} does not exist", bank_id);
+    fmt::print("play_sound: Bank {} does not exist\n", bank_id);
+    return 0;
+  }
+
+  auto handler = bank->make_handler(m_synth, sound_id, vol, pan);
+  if (handler == nullptr) {
     return 0;
   }
 
   u32 handle = m_handle_allocator.get_id();
-  m_handlers.emplace(handle, bank->make_handler(m_synth, sound_id, vol, pan));
+  m_handlers.emplace(handle, std::move(handler));
 
   return handle;
 }
@@ -110,7 +116,7 @@ void player::stop_sound(u32 sound_handle) {
 void player::set_midi_reg(u32 sound_id, u8 reg, u8 value) {
   std::scoped_lock lock(m_ticklock);
   if (m_handlers.find(sound_id) == m_handlers.end()) {
-    fmt::print("set_midi_reg: Handler {} does not exist", sound_id);
+    fmt::print("set_midi_reg: Handler {} does not exist\n", sound_id);
     return;
   }
 
@@ -150,6 +156,7 @@ u32 player::load_bank(std::filesystem::path& filepath, size_t offset) {
 
 void player::unload_bank(u32 bank_handle) {
   std::scoped_lock lock(m_ticklock);
+  return;
   fmt::print("FIMEFIXMEFIXME\n");
   exit(0);
   auto* bank = m_loader.get_bank_by_handle(bank_handle);
