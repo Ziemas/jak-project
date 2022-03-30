@@ -9,7 +9,7 @@ class blocksound_handler : public sound_handler {
   blocksound_handler(SFX& sfx, synth& synth, s32 vol, s32 pan, u32 bank_id)
       : m_volume(vol), m_pan(pan), m_bank(bank_id), m_sfx(sfx), m_synth(synth) {}
   bool tick() override;
-  u32 bank() override { return 0; };  // FIXME
+  u32 bank() override { return m_bank; };
 
   void init();
  private:
@@ -20,6 +20,6 @@ class blocksound_handler : public sound_handler {
   SFX& m_sfx;
   synth& m_synth;
   u32 m_countdown{0};
-  u32 next_grain{0};
+  u32 m_next_grain{0};
 };
 }  // namespace snd

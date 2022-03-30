@@ -2,7 +2,7 @@
 
 namespace snd {
 void blocksound_handler::init() {
-  next_grain = 0;
+  m_next_grain = 0;
   m_countdown = m_sfx.grains[0].Delay;
 }
 

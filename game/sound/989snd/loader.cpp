@@ -202,6 +202,7 @@ void loader::load_samples(u32 bank_id, std::unique_ptr<u8[]> samples) {
 void loader::unload_bank(u32 id) {
   for (auto it = m_midi_chunks.begin(); it != m_midi_chunks.end();) {
     bool del = false;
+    // FIXME delete midi
 
     if (del) {
       it = m_midi_chunks.erase(it);
@@ -211,6 +212,7 @@ void loader::unload_bank(u32 id) {
   }
 
   m_soundbanks.erase(id);
+  m_id_allocator.free_id(id);
 }
 
 }  // namespace snd

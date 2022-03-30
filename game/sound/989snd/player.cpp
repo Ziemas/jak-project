@@ -156,20 +156,18 @@ u32 player::load_bank(std::filesystem::path& filepath, size_t offset) {
 
 void player::unload_bank(u32 bank_handle) {
   std::scoped_lock lock(m_ticklock);
-  return;
-  fmt::print("FIMEFIXMEFIXME\n");
-  exit(0);
   auto* bank = m_loader.get_bank_by_handle(bank_handle);
-
-  // stop_sound(u32 sound_handle)
 
   for (auto it = m_handlers.begin(); it != m_handlers.end();) {
     if (it->second->bank() == bank_handle) {
       it = m_handlers.erase(it);
+      m_handle_allocator.free_id(it->first);
     } else {
       ++it;
     }
   }
+
+  m_loader.unload_bank(bank_handle);
 }
 
 }  // namespace snd
