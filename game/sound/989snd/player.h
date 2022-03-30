@@ -8,7 +8,7 @@
 #include "loader.h"
 #include "../common/synth.h"
 #include "common/common_types.h"
-#include "automap.h"
+#include "handle_allocator.h"
 #include <filesystem>
 #include <unordered_map>
 #include <memory>
@@ -39,7 +39,8 @@ class player {
 
  private:
   std::recursive_mutex m_ticklock;  // TODO does not need to recursive with some light restructuring
-  automap<std::unique_ptr<sound_handler>> m_handlers;
+  id_allocator m_handle_allocator;
+  std::unordered_map<u32, std::unique_ptr<sound_handler>> m_handlers;
 
   void tick(s16_output* stream, int samples);
 
