@@ -3,8 +3,8 @@
 #pragma once
 #include "../common/synth.h"
 #include "common/common_types.h"
-#include "game/sound/989snd/automap.h"
-#include "game/sound/989snd/sound_handler.h"
+#include "handle_allocator.h"
+#include "sound_handler.h"
 #include "musicbank.h"
 #include "soundbank.h"
 #include "sfxblock.h"
@@ -46,9 +46,8 @@ class loader : public locator {
   u32 read_music_bank(SoundBankData* data);
   u32 read_sfx_bank(SFXBlockData* data);
 
-  std::unordered_map<u32, std::unique_ptr<u8[]>> m_bank_samples;
-
-  automap<std::unique_ptr<SoundBank>> m_soundbanks;
+  id_allocator m_id_allocator;
+  std::unordered_map<u32, std::unique_ptr<SoundBank>> m_soundbanks;
 
   std::vector<std::unique_ptr<u8[]>> m_midi_chunks;
 

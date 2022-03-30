@@ -67,6 +67,7 @@ void player::tick(s16_output* stream, int samples) {
         if (done) {
           fmt::print("erasing handler\n");
           it = m_handlers.erase(it);
+          m_handle_allocator.free_id(it->first);
         } else {
           ++it;
         }
@@ -94,7 +95,8 @@ u32 player::play_sound(u32 bank_id, u32 sound_id, s32 vol, s32 pan, s32 pm, s32 
     return 0;
   }
 
-  u32 handle = m_handlers.emplace(bank->make_handler(m_synth, sound_id, vol, pan));
+  u32 handle = m_handle_allocator.get_id();
+  m_handlers.emplace(handle, bank->make_handler(m_synth, sound_id, vol, pan));
 
   return handle;
 }
@@ -102,6 +104,7 @@ u32 player::play_sound(u32 bank_id, u32 sound_id, s32 vol, s32 pan, s32 pm, s32 
 void player::stop_sound(u32 sound_handle) {
   std::scoped_lock lock(m_ticklock);
   m_handlers.erase(sound_handle);
+  m_handle_allocator.free_id(sound_handle);
 }
 
 void player::set_midi_reg(u32 sound_id, u8 reg, u8 value) {
@@ -147,6 +150,8 @@ u32 player::load_bank(std::filesystem::path& filepath, size_t offset) {
 
 void player::unload_bank(u32 bank_handle) {
   std::scoped_lock lock(m_ticklock);
+  fmt::print("FIMEFIXMEFIXME\n");
+  exit(0);
   auto* bank = m_loader.get_bank_by_handle(bank_handle);
 
   // stop_sound(u32 sound_handle)

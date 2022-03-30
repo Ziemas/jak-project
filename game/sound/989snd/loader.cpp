@@ -11,6 +11,8 @@ enum chunk : u32 { bank, samples, midi };
 #define FOURCC(a, b, c, d) ((u32)(((d) << 24) | ((c) << 16) | ((b) << 8) | (a)))
 
 u32 loader::read_music_bank(SoundBankData* data) {
+  u32 handle = m_id_allocator.get_id();
+
   fmt::print("Loading music bank {:.4}\n", (char*)&data->BankID);
   auto bank = std::make_unique<MusicBank>(*this);
 
@@ -32,7 +34,7 @@ u32 loader::read_music_bank(SoundBankData* data) {
     auto tonedata = (Tone*)((uintptr_t)data + prog.d.FirstTone);
     for (int i = 0; i < prog.d.NumTones; i++) {
       Tone tone = tonedata[i];
-      tone.BankID = data->BankID;
+      tone.BankID = handle;
       // I like to think of SPU ram in terms of shorts, since that's the least addressable unit on
       // it.
       tone.VAGInSR >>= 1;
@@ -44,10 +46,17 @@ u32 loader::read_music_bank(SoundBankData* data) {
   fmt::print("loaded {} programs and their tones\n", bank->programs.size());
 
   bank->type = BankType::Music;
-  return m_soundbanks.emplace(std::move(bank));
+
+  bank->bank_id = handle;
+  bank->bank_name = data->BankID;
+  m_soundbanks.emplace(handle, std::move(bank));
+
+  return handle;
 }
 
 u32 loader::read_sfx_bank(SFXBlockData* data) {
+  u32 handle = m_id_allocator.get_id();
+
   fmt::print("Loading sfx bank\n");
   auto bank = std::make_unique<SFXBlock>(*this);
 
@@ -75,7 +84,10 @@ u32 loader::read_sfx_bank(SFXBlockData* data) {
   }
 
   bank->type = BankType::SFX;
-  return m_soundbanks.emplace(std::move(bank));
+
+  bank->bank_id = handle;
+  m_soundbanks.emplace(handle, std::move(bank));
+  return handle;
 }
 
 u32 loader::read_bank(std::fstream& in) {
@@ -87,8 +99,6 @@ u32 loader::read_bank(std::fstream& in) {
   fmt::print("chunks {}\n", attr.num_chunks);
 
   for (u32 i = 0; i < attr.num_chunks; i++) {
-    // in.read((char*)&attr.where[i], sizeof(attr.where[i]));
-
     fmt::print("chunk {}\n", i);
     fmt::print("\toffset {}\n", attr.where[i].offset);
     fmt::print("\tsize {}\n", attr.where[i].size);
@@ -164,7 +174,7 @@ MusicBank* loader::get_bank_by_name(u32 id) {
   for (auto& b : m_soundbanks) {
     if (b.second->type == BankType::Music) {
       auto* bank = static_cast<MusicBank*>(b.second.get());
-      if (bank->bank_id == id) {
+      if (bank->bank_name == id) {
         return bank;
       }
     }
@@ -178,11 +188,12 @@ MIDIBlock* loader::get_midi(u32 id) {
 }
 
 u16* loader::get_bank_samples(u32 id) {
-  return (u16*)m_bank_samples.at(id).get();
+  return (u16*)m_soundbanks.at(id).get()->sampleBuf.get();
 }
 
-void loader::load_samples(u32 bank, std::unique_ptr<u8[]> samples) {
-  m_bank_samples.emplace(bank, std::move(samples));
+void loader::load_samples(u32 bank_id, std::unique_ptr<u8[]> samples) {
+  auto& bank = m_soundbanks.at(bank_id);
+  bank->sampleBuf = std::move(samples);
 }
 
 void loader::unload_bank(u32 id) {
@@ -196,7 +207,6 @@ void loader::unload_bank(u32 id) {
     }
   }
 
-  m_bank_samples.erase(id);
   m_soundbanks.erase(id);
 }
 
