@@ -111,10 +111,7 @@ class SFXBlock : public SoundBank {
                                               s32 vol,
                                               s32 pan) override;
 
-  // FIXME lets private stuff
-  SFXBlockData d;
   std::vector<SFX> sounds;
-  std::unique_ptr<u8[]> sampleBuf;
 
  private:
   locator& m_locator;

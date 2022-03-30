@@ -13,7 +13,6 @@ enum chunk : u32 { bank, samples, midi };
 u32 loader::read_music_bank(SoundBankData* data) {
   fmt::print("Loading music bank {:.4}\n", (char*)&data->BankID);
   auto bank = std::make_unique<MusicBank>(*this);
-  bank->d = *data;
 
   auto sound = (MIDISound*)((uintptr_t)data + data->FirstSound);
   for (int i = 0; i < data->NumSounds; i++) {
@@ -33,7 +32,7 @@ u32 loader::read_music_bank(SoundBankData* data) {
     auto tonedata = (Tone*)((uintptr_t)data + prog.d.FirstTone);
     for (int i = 0; i < prog.d.NumTones; i++) {
       Tone tone = tonedata[i];
-      tone.BankID = bank->d.BankID;
+      tone.BankID = data->BankID;
       // I like to think of SPU ram in terms of shorts, since that's the least addressable unit on
       // it.
       tone.VAGInSR >>= 1;
@@ -51,7 +50,6 @@ u32 loader::read_music_bank(SoundBankData* data) {
 u32 loader::read_sfx_bank(SFXBlockData* data) {
   fmt::print("Loading sfx bank\n");
   auto bank = std::make_unique<SFXBlock>(*this);
-  bank->d = *data;
 
   auto sounddata = (SFXData*)((uintptr_t)data + data->FirstSound);
   for (int i = 0; i < data->NumSounds; i++) {
@@ -166,7 +164,7 @@ MusicBank* loader::get_bank_by_name(u32 id) {
   for (auto& b : m_soundbanks) {
     if (b.second->type == BankType::Music) {
       auto* bank = static_cast<MusicBank*>(b.second.get());
-      if (bank->d.BankID == id) {
+      if (bank->bank_id == id) {
         return bank;
       }
     }

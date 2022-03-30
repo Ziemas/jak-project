@@ -22,6 +22,10 @@ class SoundBank {
  public:
   BankType type;
   virtual std::unique_ptr<sound_handler> make_handler(synth& synth, u32 sound_id, s32 vol, s32 pan) = 0;
+
+  u32 bank_id;
+  u32 bank_name;
+  std::unique_ptr<u8[]> sampleBuf;
 };
 
 }  // namespace snd

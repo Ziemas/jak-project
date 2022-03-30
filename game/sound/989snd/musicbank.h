@@ -65,11 +65,8 @@ class MusicBank : public SoundBank {
                                               s32 vol,
                                               s32 pan) override;
 
-  // FIXME lets private stuff
-  SoundBankData d;
   std::vector<Prog> programs;
   std::vector<MIDISound> sounds;
-  std::unique_ptr<u8[]> sampleBuf;
 
  private:
   locator& m_locator;
