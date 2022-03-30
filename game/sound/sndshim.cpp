@@ -48,8 +48,8 @@ void snd_SetPlayBackMode(s32) {
 s32 snd_SoundIsStillPlaying(s32 sound_handle) {
   return player->sound_still_active(sound_handle);
 }
-void snd_StopSound(s32) {
-  printf("snd_StopSound\n");
+void snd_StopSound(s32 handle) {
+  player->stop_sound(handle);
 }
 void snd_SetSoundVolPan(s32, s32, s32) {
   // printf("snd_SetSoundVolPan\n");
