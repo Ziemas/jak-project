@@ -59,7 +59,7 @@ void snd_SetSoundVolPan(s32, s32, s32) {
   // printf("snd_SetSoundVolPan\n");
 }
 void snd_SetMasterVolume(s32 group, s32 volume) {
-  printf("setting group %d to %d\n", group, volume);
+  //printf("setting group %d to %d\n", group, volume);
 
   player->set_master_volume(group, volume);
 }

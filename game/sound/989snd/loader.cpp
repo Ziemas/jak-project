@@ -147,6 +147,8 @@ u32 loader::read_bank(std::fstream& in) {
     load_midi(in);
   }
 
+  fmt::print("Created bank {}\n", bank_id);
+
   return bank_id;
 }
 
