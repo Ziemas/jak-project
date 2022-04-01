@@ -66,8 +66,8 @@ void player::tick(s16_output* stream, int samples) {
         bool done = it->second->tick();
         if (done) {
           fmt::print("erasing handler\n");
-          it = m_handlers.erase(it);
           m_handle_allocator.free_id(it->first);
+          it = m_handlers.erase(it);
         } else {
           ++it;
         }
@@ -109,8 +109,8 @@ u32 player::play_sound(u32 bank_id, u32 sound_id, s32 vol, s32 pan, s32 pm, s32 
 
 void player::stop_sound(u32 sound_handle) {
   std::scoped_lock lock(m_ticklock);
-  m_handlers.erase(sound_handle);
   m_handle_allocator.free_id(sound_handle);
+  m_handlers.erase(sound_handle);
 }
 
 void player::set_midi_reg(u32 sound_id, u8 reg, u8 value) {
@@ -157,11 +157,13 @@ u32 player::load_bank(std::filesystem::path& filepath, size_t offset) {
 void player::unload_bank(u32 bank_handle) {
   std::scoped_lock lock(m_ticklock);
   auto* bank = m_loader.get_bank_by_handle(bank_handle);
+  if (bank == nullptr)
+    return;
 
   for (auto it = m_handlers.begin(); it != m_handlers.end();) {
     if (it->second->bank() == bank_handle) {
-      it = m_handlers.erase(it);
       m_handle_allocator.free_id(it->first);
+      it = m_handlers.erase(it);
     } else {
       ++it;
     }
