@@ -3,7 +3,7 @@
 #include "loader.h"
 #include <fstream>
 #include <optional>
-#include <fmt/core.h>
+#include <third-party/fmt/core.h>
 
 namespace snd {
 enum chunk : u32 { bank, samples, midi };
@@ -65,7 +65,7 @@ u32 loader::read_sfx_bank(SFXBlockData* data) {
     SFX sound;
     sound.d = sounddata[i];
     bank->sounds.push_back(sound);
- }
+  }
 
   for (auto& sound : bank->sounds) {
     auto graindata = (SFXGrain*)((uintptr_t)data + data->FirstGrain + sound.d.FirstGrain);
@@ -81,9 +81,9 @@ u32 loader::read_sfx_bank(SFXBlockData* data) {
 
     for (int i = 0; i < sound.d.NumGrains; i++) {
       SFXGrain grain = graindata[i];
-      //fmt::print("\t\t Grain {}:\n", i);
-      //fmt::print("\t\t Type {}\n", grain.Type);
-      //fmt::print("\t\t Delay {}\n", grain.Delay);
+      // fmt::print("\t\t Grain {}:\n", i);
+      // fmt::print("\t\t Type {}\n", grain.Type);
+      // fmt::print("\t\t Delay {}\n", grain.Delay);
       sound.grains.push_back(grain);
     }
   }

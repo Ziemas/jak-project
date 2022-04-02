@@ -44,6 +44,10 @@ class player {
 
   void tick(s16_output* stream, int samples);
 
+#ifdef _WIN32
+  bool m_coinitialized = false;
+#endif
+
   loader m_loader;
   synth m_synth;
 

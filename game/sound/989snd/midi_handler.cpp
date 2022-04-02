@@ -3,8 +3,12 @@
 #include "midi_handler.h"
 #include "ame_handler.h"
 #include "util.h"
-#include <fmt/core.h>
+
+#include <third-party/fmt/core.h>
+
+#ifdef __linux
 #include <pthread.h>
+#endif
 
 namespace snd {
 /*

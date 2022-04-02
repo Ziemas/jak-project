@@ -1,6 +1,7 @@
 // Copyright: 2021 - 2022, Ziemas
 // SPDX-License-Identifier: ISC
 #include "util.h"
+#include <array>
 
 namespace snd {
 static u16 NotePitchTable[] = {

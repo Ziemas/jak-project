@@ -1,4 +1,5 @@
 #include "player.h"
+#include <filesystem>
 
 int main(int argc, char* argv[]) {
   snd::player player;
@@ -16,9 +17,11 @@ int main(int argc, char* argv[]) {
     timespec rqtp{}, rmtp{};
     rqtp.tv_nsec = 0;
     rqtp.tv_sec = 1;
+#ifdef __linux
     if (nanosleep(&rqtp, &rmtp) == -1) {
       break;
     }
+#endif
   }
 
   return 0;

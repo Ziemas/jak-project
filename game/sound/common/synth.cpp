@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: ISC
 #include "synth.h"
 #include "../989snd/util.h"
+#include <stdexcept>
 
 namespace snd {
 
