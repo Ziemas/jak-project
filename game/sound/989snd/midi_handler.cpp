@@ -6,10 +6,6 @@
 
 #include <third-party/fmt/core.h>
 
-#ifdef __linux
-#include <pthread.h>
-#endif
-
 namespace snd {
 /*
 ** In the original 989snd, the player struct can live in different places
