@@ -1,12 +1,24 @@
 // Copyright: 2021 - 2022, Ziemas
 // SPDX-License-Identifier: ISC
 #include "player.h"
-#include <fmt/core.h>
+#include <third-party/fmt/core.h>
 #include <fstream>
+
+#ifdef _WIN32
+#include <windows.h>
+#endif
 
 namespace snd {
 
 player::player() : m_synth(m_loader) {
+#ifdef _WIN32
+  HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+  m_coinitialized = SUCCEEDED(hr);
+  if (FAILED(hr) && hr != RPC_E_CHANGED_MODE) {
+    throw std::runtime_error("(Cubeb) Failed to initialize COM");
+  }
+#endif
+
   cubeb_init(&m_ctx, "OpenGOAL", nullptr);
 
   cubeb_stream_params outparam = {};
@@ -39,6 +51,12 @@ player::~player() {
   cubeb_stream_stop(m_stream);
   cubeb_stream_destroy(m_stream);
   cubeb_destroy(m_ctx);
+#ifdef _WIN32
+  if (m_coinitialized) {
+    CoUninitialize();
+    m_coinitialized = false;
+  }
+#endif
 }
 
 long player::sound_callback([[maybe_unused]] cubeb_stream* stream,
@@ -147,7 +165,7 @@ void player::set_master_volume(u32 group, s32 volume) {
 
 u32 player::load_bank(std::filesystem::path& filepath, size_t offset) {
   std::scoped_lock lock(m_ticklock);
-  fmt::print("Loading bank {}\n", filepath.c_str());
+  fmt::print("Loading bank {}\n", filepath.string());
   std::fstream in(filepath, std::fstream::binary | std::fstream::in);
   in.seekg(offset, std::fstream::beg);
 
