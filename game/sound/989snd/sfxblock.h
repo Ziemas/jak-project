@@ -98,6 +98,10 @@ struct SFXData {
   /*   8 */ u32 FirstGrain;
 };
 
+enum SFXFlags {
+  SoloSound = 2, // Stop previous instances
+};
+
 struct SFX {
   SFXData d;
   std::vector<SFXGrain> grains;
