@@ -44,12 +44,14 @@ static std::pair<s16, s16> pitchbend(Tone& tone,
 // Seems correct, given same input produces same output as 989snd
 s16 synth::adjust_vol_to_group(s16 involume, int group) {
   s32 volume = involume;
+  // NOTE grou >= 7 in version 2
   if (group >= 15)
     return volume;
 
   if (volume >= 0x7fff)
     volume = 0x7ffe;
 
+  // NOTE no duckers in version 2
   s32 modifier = (m_master_vol[group] * m_group_duck[group]) / 0x10000;
   volume = (volume * modifier) / 0x400;
   int sign = 1;
