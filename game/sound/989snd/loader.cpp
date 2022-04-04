@@ -67,9 +67,13 @@ u32 loader::read_sfx_bank(SFXBlockData* data) {
     bank->sounds.push_back(sound);
   }
 
+  fmt::print("numvags {}\n", data->NumVAGs);
+  fmt::print("vagsinsr {:x}\n", data->VagsInSR);
+  fmt::print("vagdatasize {:x}\n", data->VagDataSize);
+  fmt::print("sramallocsize {:x}\n", data->SRAMAllocSize);
+
   for (auto& sound : bank->sounds) {
     auto graindata = (SFXGrain*)((uintptr_t)data + data->FirstGrain + sound.d.FirstGrain);
-    /*
     fmt::print("Adding sound\n");
     fmt::print("\t vol {}\n", sound.d.Vol);
     fmt::print("\t volgroup {}\n", sound.d.VolGroup);
@@ -77,13 +81,20 @@ u32 loader::read_sfx_bank(SFXBlockData* data) {
     fmt::print("\t grains {}\n", sound.d.NumGrains);
     fmt::print("\t limit {}\n", sound.d.InstanceLimit);
     fmt::print("\t flags {}\n", sound.d.Flags);
-    */
 
     for (int i = 0; i < sound.d.NumGrains; i++) {
       SFXGrain grain = graindata[i];
-      // fmt::print("\t\t Grain {}:\n", i);
-      // fmt::print("\t\t Type {}\n", grain.Type);
-      // fmt::print("\t\t Delay {}\n", grain.Delay);
+      if (grain.Type == 1) {
+        grain.GrainParams.tone.VAGInSR >>= 1;
+        grain.GrainParams.tone.BankID = handle;
+      }
+      fmt::print("\t\t Grain {}:\n", i);
+      fmt::print("\t\t Type {}\n", grain.Type);
+      fmt::print("\t\t Delay {}\n", grain.Delay);
+      if (grain.Type == 1) {
+        fmt::print("\t\t VagInSR {:x}\n", grain.GrainParams.tone.VAGInSR);
+
+      }
       sound.grains.push_back(grain);
     }
   }

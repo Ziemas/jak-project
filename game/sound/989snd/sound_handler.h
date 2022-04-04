@@ -10,7 +10,5 @@ class sound_handler {
   virtual ~sound_handler() = default;
   virtual bool tick() = 0;
   virtual u32 bank() = 0;
-
- private:
 };
 }  // namespace snd
