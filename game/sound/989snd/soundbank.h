@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include "vagvoice.h"
 #include "locator.h"
 #include "sound_handler.h"
 #include "common/common_types.h"
@@ -21,7 +22,12 @@ enum class BankType {
 class SoundBank {
  public:
   BankType type;
-  virtual std::unique_ptr<sound_handler> make_handler(synth& synth, u32 sound_id, s32 vol, s32 pan) = 0;
+  virtual std::unique_ptr<sound_handler> make_handler(voice_manager& vm,
+                                                      u32 sound_id,
+                                                      s32 vol,
+                                                      s32 pan,
+                                                      s32 pm,
+                                                      s32 pb) = 0;
 
   u32 bank_id;
   u32 bank_name;

@@ -12,12 +12,6 @@ namespace snd {
 
 class voice {
  public:
-  voice(u16* sample, u8 channel, u64 owner, u8 note)
-      : m_channel(channel), m_owner(owner), m_note(note), m_sample(sample) {}
-
-  u8 m_channel;
-  u64 m_owner;
-  u8 m_note;
   s16_output run();
 
   void key_on();
@@ -43,6 +37,10 @@ class voice {
     m_Volume.left.Set(left);
     m_Volume.right.Set(right);
   }
+
+  void set_sample(u16* sample) { m_sample = sample; }
+
+  u32 get_nax() { return m_NAX; }
 
  private:
   union ADPCMHeader {

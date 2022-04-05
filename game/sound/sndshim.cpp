@@ -39,11 +39,11 @@ void snd_SetReverbDepth(s32, s32, s32) {
 void snd_SetReverbType(s32, s32) {
   printf("snd_SetReverbType\n");
 }
-void snd_SetPanTable(s16*) {
-  printf("snd_SetPanTable\n");
+void snd_SetPanTable(s16* table) {
+  player->set_pan_table((snd::vol_pair*)table);
 }
-void snd_SetPlayBackMode(s32) {
-  printf("snd_SetPlayBackMode\n");
+void snd_SetPlayBackMode(s32 mode) {
+  player->set_playback_mode(mode);
 }
 s32 snd_SoundIsStillPlaying(s32 sound_handle) {
   if (player->sound_still_active(sound_handle)) {
@@ -59,7 +59,7 @@ void snd_SetSoundVolPan(s32, s32, s32) {
   // printf("snd_SetSoundVolPan\n");
 }
 void snd_SetMasterVolume(s32 group, s32 volume) {
-  //printf("setting group %d to %d\n", group, volume);
+  // printf("setting group %d to %d\n", group, volume);
 
   player->set_master_volume(group, volume);
 }

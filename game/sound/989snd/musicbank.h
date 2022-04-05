@@ -60,10 +60,12 @@ struct Prog;
 class MusicBank : public SoundBank {
  public:
   MusicBank(locator& loc) : m_locator(loc) {}
-  std::unique_ptr<sound_handler> make_handler(synth& synth,
+  std::unique_ptr<sound_handler> make_handler(voice_manager& vm,
                                               u32 sound_id,
                                               s32 vol,
-                                              s32 pan) override;
+                                              s32 pan,
+                                              s32 pm,
+                                              s32 pb) override;
 
   std::vector<Prog> programs;
   std::vector<MIDISound> sounds;

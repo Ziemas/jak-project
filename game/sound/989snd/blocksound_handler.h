@@ -1,13 +1,14 @@
 #pragma once
-#include "game/sound/989snd/sfxblock.h"
+#include "sfxblock.h"
+#include "vagvoice.h"
 #include "sound_handler.h"
 #include "common/common_types.h"
 
 namespace snd {
 class blocksound_handler : public sound_handler {
  public:
-  blocksound_handler(SFX& sfx, synth& synth, s32 vol, s32 pan, u32 bank_id)
-      : m_volume(vol), m_pan(pan), m_bank(bank_id), m_sfx(sfx), m_synth(synth) {}
+  blocksound_handler(SFX& sfx, voice_manager& vm, s32 vol, s32 pan, u32 bank_id)
+      : m_volume(vol), m_pan(pan), m_bank(bank_id), m_sfx(sfx), m_vm(vm) {}
   bool tick() override;
   u32 bank() override { return m_bank; };
 
@@ -19,7 +20,7 @@ class blocksound_handler : public sound_handler {
   bool m_done{false};
 
   SFX& m_sfx;
-  synth& m_synth;
+  voice_manager& m_vm;
 
   s32 m_volume{0};
   s32 m_pan{0};

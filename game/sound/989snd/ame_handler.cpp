@@ -5,7 +5,7 @@
 namespace snd {
 
 ame_handler::ame_handler(MultiMIDIBlockHeader* block,
-                         synth& synth,
+                         voice_manager& vm,
                          s32 vol,
                          s32 pan,
                          s8 repeats,
@@ -14,7 +14,7 @@ ame_handler::ame_handler(MultiMIDIBlockHeader* block,
                          u32 bank)
     : m_header(block),
       m_locator(loc),
-      m_synth(synth),
+      m_vm(vm),
       m_vol(vol),
       m_pan(pan),
       m_repeats(repeats),
@@ -22,7 +22,7 @@ ame_handler::ame_handler(MultiMIDIBlockHeader* block,
       m_bank(bank) {
   auto firstblock = (MIDIBlockHeader*)(block->BlockPtr[0] + (uintptr_t)block);
 
-  m_midis.emplace_front(std::make_unique<midi_handler>(firstblock, synth, vol, pan, repeats,
+  m_midis.emplace_front(std::make_unique<midi_handler>(firstblock, vm, vol, pan, repeats,
                                                        m_group, loc, m_bank, this));
 };
 
@@ -39,7 +39,7 @@ bool ame_handler::tick() {
 void ame_handler::start_segment(u32 id) {
   auto midiblock = (MIDIBlockHeader*)(m_header->BlockPtr[id] + (uintptr_t)m_header);
   // fmt::print("starting segment {}\n", id);
-  m_midis.emplace_front(std::make_unique<midi_handler>(midiblock, m_synth, m_vol, m_pan, m_repeats,
+  m_midis.emplace_front(std::make_unique<midi_handler>(midiblock, m_vm, m_vol, m_pan, m_repeats,
                                                        m_group, m_locator, m_bank, this));
 }
 
