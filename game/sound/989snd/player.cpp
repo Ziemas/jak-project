@@ -83,7 +83,7 @@ void player::tick(s16_output* stream, int samples) {
       for (auto it = m_handlers.begin(); it != m_handlers.end();) {
         bool done = it->second->tick();
         if (done) {
-          fmt::print("erasing handler\n");
+          // fmt::print("erasing handler\n");
           m_handle_allocator.free_id(it->first);
           it = m_handlers.erase(it);
         } else {
@@ -108,7 +108,7 @@ void player::tick(s16_output* stream, int samples) {
 u32 player::play_sound(u32 bank_id, u32 sound_id, s32 vol, s32 pan, s32 pm, s32 pb) {
   std::scoped_lock lock(m_ticklock);
   auto bank = m_loader.get_bank_by_handle(bank_id);
-  fmt::print("play_sound {}:{}\n", bank_id, sound_id);
+  // fmt::print("play_sound {}:{}\n", bank_id, sound_id);
   if (bank == nullptr) {
     fmt::print("play_sound: Bank {} does not exist\n", bank_id);
     return 0;
@@ -144,7 +144,8 @@ void player::set_midi_reg(u32 sound_id, u8 reg, u8 value) {
 
 bool player::sound_still_active(u32 sound_id) {
   std::scoped_lock lock(m_ticklock);
-  if (m_handlers.find(sound_id) == m_handlers.end())
+  auto handler = m_handlers.find(sound_id);
+  if (handler == m_handlers.end())
     return false;
 
   return true;
@@ -197,10 +198,51 @@ void player::unload_bank(u32 bank_handle) {
 }
 
 void player::set_pan_table(vol_pair* pantable) {
+  std::scoped_lock lock(m_ticklock);
   m_vmanager.set_pan_table(pantable);
 }
 
 void player::set_playback_mode(s32 mode) {
+  std::scoped_lock lock(m_ticklock);
   m_vmanager.set_playback_mode(mode);
 }
+
+void player::pause_sound(s32 sound_id) {
+  std::scoped_lock lock(m_ticklock);
+  auto handler = m_handlers.find(sound_id);
+  if (handler == m_handlers.end())
+    return;
+
+  handler->second->pause();
+}
+
+void player::continue_sound(s32 sound_id) {
+  std::scoped_lock lock(m_ticklock);
+  auto handler = m_handlers.find(sound_id);
+  if (handler == m_handlers.end())
+    return;
+
+  handler->second->unpause();
+}
+
+void player::pause_all_sounds_in_group(u8 group) {
+  std::scoped_lock lock(m_ticklock);
+
+  for (auto& h : m_handlers) {
+    if ((1 << h.second->group()) & group) {
+      h.second->pause();
+    }
+  }
+}
+
+void player::continue_all_sounds_in_group(u8 group) {
+  std::scoped_lock lock(m_ticklock);
+
+  for (auto& h : m_handlers) {
+    if ((1 << h.second->group()) & group) {
+      h.second->unpause();
+    }
+  }
+}
+
 }  // namespace snd

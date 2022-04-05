@@ -8,15 +8,19 @@ namespace snd {
 class blocksound_handler : public sound_handler {
  public:
   blocksound_handler(SFX& sfx, voice_manager& vm, s32 vol, s32 pan, u32 bank_id)
-      : m_volume(vol), m_pan(pan), m_bank(bank_id), m_sfx(sfx), m_vm(vm) {}
+      : m_sfx(sfx), m_vm(vm), m_volume(vol), m_pan(pan), m_bank(bank_id) {}
   bool tick() override;
   u32 bank() override { return m_bank; };
 
+  void pause() override;
+  void unpause() override;
+  u8 group() override { return m_group; };
   void init();
 
  private:
   void do_grain();
 
+  u8 m_group{0};
   bool m_done{false};
 
   SFX& m_sfx;

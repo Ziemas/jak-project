@@ -46,12 +46,15 @@ class vag_voice : public voice {
   s32 current_pb{0};
   s32 start_note{0};
   s32 start_fine{0};
+  bool paused{false};
 };
 
 class voice_manager {
  public:
   voice_manager(synth& synth, locator& loc);
   void start_tone(std::shared_ptr<vag_voice> voice);
+  void pause(std::shared_ptr<vag_voice> voice);
+  void unpause(std::shared_ptr<vag_voice> voice);
   void set_pan_table(vol_pair* table) { m_pan_table = table; };
 
   vol_pair make_volume(int sound_vol,

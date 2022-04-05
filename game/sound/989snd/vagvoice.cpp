@@ -271,7 +271,7 @@ void voice_manager::set_master_vol(u8 group, s32 volume) {
 
   for (auto& p : m_voices) {
     auto voice = p.lock();
-    if (voice == nullptr) {
+    if (voice == nullptr || voice->paused) {
       continue;
     }
 
@@ -282,6 +282,28 @@ void voice_manager::set_master_vol(u8 group, s32 volume) {
       voice->set_volume(left >> 1, right >> 1);
     }
   }
+}
+
+void voice_manager::pause(std::shared_ptr<vag_voice> voice) {
+  voice->set_volume(0, 0);
+  voice->set_pitch(0);
+  voice->paused = true;
+}
+
+void voice_manager::unpause(std::shared_ptr<vag_voice> voice) {
+  s16 left = adjust_vol_to_group(voice->basevol.left, voice->group);
+  s16 right = adjust_vol_to_group(voice->basevol.right, voice->group);
+
+  voice->set_volume(left >> 1, right >> 1);
+
+  std::pair<s16, s16> note = pitchbend(voice->tone, voice->current_pb, voice->current_pm,
+                                       voice->start_note, voice->start_fine);
+
+  auto pitch =
+      PS1Note2Pitch(voice->tone.CenterNote, voice->tone.CenterFine, note.first, note.second);
+
+  voice->set_pitch(pitch);
+  voice->paused = false;
 }
 
 };  // namespace snd
