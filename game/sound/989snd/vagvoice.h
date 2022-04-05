@@ -1,6 +1,7 @@
 // Copyright: 2021 - 2022, Ziemas
 // SPDX-License-Identifier: ISC
 #pragma once
+#include <list>
 #include <memory>
 #include "common/common_types.h"
 #include "locator.h"
@@ -61,12 +62,17 @@ class voice_manager {
                        int tone_vol,
                        int tone_pan);
 
-  void set_master_vol(u8 group, s32 volume) { m_master_vol[group] = volume; }
+  void set_master_vol(u8 group, s32 volume);
   void set_playback_mode(s32 mode) { m_stereo_or_mono = mode; }
 
  private:
   synth& m_synth;
   locator& m_locator;
+
+  std::list<std::weak_ptr<vag_voice>> m_voices;
+  void clean_voices() {
+    m_voices.remove_if([](auto& v) { return v.expired(); });
+  }
 
   s16 adjust_vol_to_group(s16 involume, int group);
 
