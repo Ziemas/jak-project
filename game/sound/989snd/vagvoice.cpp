@@ -172,6 +172,8 @@ void voice_manager::start_tone(std::shared_ptr<vag_voice> voice) {
 
   voice->key_on();
 
+  clean_voices();
+  m_voices.emplace_front(voice);
   m_synth.add_voice(voice);
 }
 
@@ -262,6 +264,24 @@ s16 voice_manager::adjust_vol_to_group(s16 involume, int group) {
   // fmt::print("made volume {:x} -> {:x}\n", involume, volume);
   s16 retval = static_cast<s16>((volume * volume) / 0x7ffe * sign);
   return retval;
+}
+
+void voice_manager::set_master_vol(u8 group, s32 volume) {
+  m_master_vol[group] = volume;
+
+  for (auto& p : m_voices) {
+    auto voice = p.lock();
+    if (voice == nullptr) {
+      continue;
+    }
+
+    if (voice->group == group) {
+      s16 left = adjust_vol_to_group(voice->basevol.left, voice->group);
+      s16 right = adjust_vol_to_group(voice->basevol.right, voice->group);
+
+      voice->set_volume(left >> 1, right >> 1);
+    }
+  }
 }
 
 };  // namespace snd
