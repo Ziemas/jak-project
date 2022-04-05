@@ -33,6 +33,32 @@ std::pair<size_t, u32> midi_handler::read_vlq(u8* value) {
   return {len, out};
 }
 
+void midi_handler::pause() {
+  m_paused = true;
+
+  for (auto& p : m_voices) {
+    auto voice = p.lock();
+    if (voice == nullptr) {
+      continue;
+    }
+
+    m_vm.pause(voice);
+  }
+}
+
+void midi_handler::unpause() {
+  m_paused = false;
+
+  for (auto& p : m_voices) {
+    auto voice = p.lock();
+    if (voice == nullptr) {
+      continue;
+    }
+
+    m_vm.unpause(voice);
+  }
+}
+
 void midi_handler::mute_channel(u8 channel) {
   // fmt::print("{:x} ame muting channel {}\n", (u64)this, channel);
   m_mute_state[channel] = true;
@@ -204,6 +230,10 @@ void midi_handler::system_event() {
 }
 
 bool midi_handler::tick() {
+  if (m_paused) {
+    return m_track_complete;
+  }
+
   try {
     m_voices.remove_if([](auto& v) { return v.expired(); });
     step();

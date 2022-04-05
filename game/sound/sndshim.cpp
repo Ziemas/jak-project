@@ -69,11 +69,12 @@ void snd_UnloadBank(s32 bank_handle) {
 void snd_ResolveBankXREFS() {
   printf("snd_ResolveBankXREFS\n");
 }
-void snd_ContinueAllSoundsInGroup(u8) {
-  printf("snd_ContinueAllSoundsInGroup\n");
+void snd_ContinueAllSoundsInGroup(u8 group) {
+  player->continue_all_sounds_in_group(group);
 }
-void snd_PauseAllSoundsInGroup(u8) {
-  printf("snd_PauseAllSoundsInGroup\n");
+
+void snd_PauseAllSoundsInGroup(u8 group) {
+  player->pause_all_sounds_in_group(group);
 }
 
 void snd_SetMIDIRegister(s32 sound_handle, u8 reg, u8 value) {
@@ -89,12 +90,15 @@ void snd_SetSoundPitchModifier(s32, s32) {
 void snd_SetSoundPitchBend(s32, s32) {
   printf("snd_SetSoundPitchBend\n");
 }
-void snd_PauseSound(s32) {
-  printf("snd_PauseSound\n");
+
+void snd_PauseSound(s32 sound_handle) {
+  player->pause_sound(sound_handle);
 }
-void snd_ContinueSound(s32) {
-  printf("snd_ContinueSound\n");
+
+void snd_ContinueSound(s32 sound_handle) {
+  player->continue_sound(sound_handle);
 }
+
 void snd_AutoPitch(s32, s32, s32, s32) {
   printf("snd_AutoPitch\n");
 }
