@@ -3,7 +3,6 @@
 #pragma once
 
 #include "fifo.h"
-#include "util.h"
 
 namespace snd {
 struct effectRegParams {

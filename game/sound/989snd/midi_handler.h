@@ -2,23 +2,43 @@
 // SPDX-License-Identifier: ISC
 #pragma once
 #include "ame_handler.h"
+#include "vagvoice.h"
 #include "loader.h"
 #include "sound_handler.h"
-#include "../common/synth.h"
 #include "common/common_types.h"
-#include "../common/voice.h"
 #include <exception>
+#include <memory>
+#include <list>
 #include <optional>
 #include <string>
 #include <utility>
 
 namespace snd {
-class ame_handler;
 
+struct ProgData {
+  /*   0 */ s8 NumTones;
+  /*   1 */ s8 Vol;
+  /*   2 */ s16 Pan;
+  /*   4 */ /*Tone**/ u32 FirstTone;
+};
+
+struct Prog {
+  ProgData d;
+  std::vector<Tone> tones;
+};
+
+class midi_voice : public vag_voice {
+ public:
+  midi_voice(Tone& t) : vag_voice(t) {}
+  u8 note{0};
+  u8 channel{0};
+};
+
+class ame_handler;
 class midi_handler : public sound_handler {
  public:
   midi_handler(MIDIBlockHeader* block,
-               synth& synth,
+               voice_manager& vm,
                s32 vol,
                s32 pan,
                s8 repeats,
@@ -34,7 +54,7 @@ class midi_handler : public sound_handler {
         m_bank(bank),
         m_header(block),
         m_group(group),
-        m_synth(synth) {
+        m_vm(vm) {
     m_seq_data_start = (u8*)((uintptr_t)block + (uintptr_t)block->DataStart);
     m_seq_ptr = m_seq_data_start;
     m_tempo = block->Tempo;
@@ -62,6 +82,8 @@ class midi_handler : public sound_handler {
   };
 
   std::optional<ame_handler*> m_parent;
+
+  std::list<std::weak_ptr<midi_voice>> m_voices;
 
   locator& m_locator;
   s32 m_vol{0x7f};
@@ -93,7 +115,7 @@ class midi_handler : public sound_handler {
 
   std::array<u8, 16> m_programs{};
 
-  synth& m_synth;
+  voice_manager& m_vm;
 
   void step();
   void new_delta();

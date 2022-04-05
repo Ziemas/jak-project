@@ -99,7 +99,7 @@ struct SFXData {
 };
 
 enum SFXFlags {
-  SoloSound = 2, // Stop previous instances
+  SoloSound = 2,  // Stop previous instances
 };
 
 struct SFX {
@@ -110,10 +110,12 @@ struct SFX {
 class SFXBlock : public SoundBank {
  public:
   SFXBlock(locator& loc) : m_locator(loc) {}
-  std::unique_ptr<sound_handler> make_handler(synth& synth,
+  std::unique_ptr<sound_handler> make_handler(voice_manager& vm,
                                               u32 sound_id,
                                               s32 vol,
-                                              s32 pan) override;
+                                              s32 pan,
+                                              s32 pm,
+                                              s32 pb) override;
 
   std::vector<SFX> sounds;
 

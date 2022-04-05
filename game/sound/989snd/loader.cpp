@@ -1,6 +1,7 @@
 // Copyright: 2021 - 2022, Ziemas
 // SPDX-License-Identifier: ISC
 #include "loader.h"
+#include "midi_handler.h"
 #include <fstream>
 #include <optional>
 #include <third-party/fmt/core.h>
@@ -37,9 +38,7 @@ u32 loader::read_music_bank(SoundBankData* data) {
       tone.BankID = handle;
       // I like to think of SPU ram in terms of shorts, since that's the least addressable unit on
       // it.
-      tone.VAGInSR >>= 1;
       prog.tones.emplace_back(tone);
-      fmt::print("tone {} vaginsr {:x}\n", i, tone.VAGInSR);
     }
   }
 
@@ -85,7 +84,6 @@ u32 loader::read_sfx_bank(SFXBlockData* data) {
     for (int i = 0; i < sound.d.NumGrains; i++) {
       SFXGrain grain = graindata[i];
       if (grain.Type == 1) {
-        grain.GrainParams.tone.VAGInSR >>= 1;
         grain.GrainParams.tone.BankID = handle;
       }
       fmt::print("\t\t Grain {}:\n", i);
@@ -205,8 +203,8 @@ MIDIBlock* loader::get_midi(u32 id) {
   return m_midi.at(id);
 }
 
-u16* loader::get_bank_samples(u32 id) {
-  return (u16*)m_soundbanks.at(id).get()->sampleBuf.get();
+u8* loader::get_bank_samples(u32 id) {
+  return m_soundbanks.at(id).get()->sampleBuf.get();
 }
 
 void loader::load_samples(u32 bank_id, std::unique_ptr<u8[]> samples) {

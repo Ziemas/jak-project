@@ -32,7 +32,7 @@ class loader : public locator {
   SoundBank* get_bank_by_handle(u32 id) override;
   MusicBank* get_bank_by_name(u32 id) override;
   MIDIBlock* get_midi(u32 id) override;
-  u16* get_bank_samples(u32 id) override;
+  u8* get_bank_samples(u32 id) override;
 
   void unload_bank(u32 id);
 

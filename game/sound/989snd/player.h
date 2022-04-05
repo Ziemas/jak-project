@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: ISC
 #pragma once
 #include "ame_handler.h"
+#include "game/sound/989snd/vagvoice.h"
 #include "third-party/cubeb/cubeb/include/cubeb/cubeb.h"
 #include "midi_handler.h"
 #include "sound_handler.h"
@@ -36,6 +37,8 @@ class player {
   void set_master_volume(u32 group, s32 volume);
   void unload_bank(u32 bank_handle);
   void stop_sound(u32 sound_handle);
+  void set_pan_table(vol_pair* pantable);
+  void set_playback_mode(s32 mode);
 
  private:
   std::recursive_mutex m_ticklock;  // TODO does not need to recursive with some light restructuring
@@ -50,6 +53,7 @@ class player {
 
   loader m_loader;
   synth m_synth;
+  voice_manager m_vmanager;
 
   cubeb* m_ctx{nullptr};
   cubeb_stream* m_stream{nullptr};

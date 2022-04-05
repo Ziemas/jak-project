@@ -1,5 +1,4 @@
 #include "blocksound_handler.h"
-#include "game/sound/989snd/util.h"
 
 namespace snd {
 void blocksound_handler::init() {
@@ -28,10 +27,9 @@ void blocksound_handler::do_grain() {
 
   if (grain.Type == 1) {
       // TODO passing m_pan here makes stuff sound bad, why?
-      auto volume = make_volume(127, m_volume, m_pan, 127,
-                                0, grain.GrainParams.tone.Vol, grain.GrainParams.tone.Pan);
+//      auto volume = make_volume(127, m_volume, m_pan, 127,
+//                                0, grain.GrainParams.tone.Vol, grain.GrainParams.tone.Pan);
 
-      m_synth.key_on(grain.GrainParams.tone, 0, m_note, volume, (u64)this, 0);
       fmt::print("{:x}\n", grain.GrainParams.tone.VAGInSR);
   } else {
     fmt::print("Ignoring grain {}, type {}\n", m_next_grain, grain.Type);

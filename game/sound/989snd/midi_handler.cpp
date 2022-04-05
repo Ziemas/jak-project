@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: ISC
 #include "midi_handler.h"
 #include "ame_handler.h"
-#include "util.h"
 
 #include <third-party/fmt/core.h>
 
@@ -59,8 +58,8 @@ void midi_handler::note_on() {
     return;
   }
 
-  // fmt::print("{:x} {}: [ch{:01x}] note on {:02x} {:02x}\n", (u64)this, m_time, channel, note,
-  // velocity);
+  fmt::print("{:x} {}: [ch{:01x}] note on {:02x} {:02x}\n", (u64)this, m_time, channel, note,
+             velocity);
 
   // Key on all the applicable tones for the program
   auto bank = dynamic_cast<MusicBank*>(m_locator.get_bank_by_name(m_header->BankID));
@@ -73,11 +72,23 @@ void midi_handler::note_on() {
         pan -= 360;
       }
 
-      // TODO passing m_pan here makes stuff sound bad, why?
-      auto volume = make_volume(m_vol, (velocity * m_chanvol[channel]) / 0x7f, pan, program.d.Vol,
-                                program.d.Pan, t.Vol, t.Pan);
+      auto voice = std::make_shared<midi_voice>(t);
+      voice->basevol = m_vm.make_volume(m_vol, (velocity * m_chanvol[channel]) / 0x7f, pan,
+                                        program.d.Vol, program.d.Pan, t.Vol, t.Pan);
 
-      m_synth.key_on(t, channel, note, volume, (u64)this, m_group);
+      voice->note = note;
+      voice->channel = channel;
+
+      voice->start_note = note;
+      voice->start_fine = 0;
+
+      // TODO
+      // voice->current_pm = 0;
+      // voice->current_pb = 0;
+
+      voice->group = m_group;
+      m_vm.start_tone(voice);
+      m_voices.emplace_front(voice);
     }
   }
 
@@ -93,8 +104,17 @@ void midi_handler::note_off() {
   // fmt::print("{}: note off {:02x} {:02x} {:02x}\n", m_time, m_status, m_seq_ptr[0],
   // m_seq_ptr[1]);
 
-  // TODO we need tracking for who owns the voices
-  m_synth.key_off(channel, note, (u64)this);
+  for (auto& v : m_voices) {
+    auto voice = v.lock();
+    if (voice == nullptr) {
+      continue;
+    }
+
+    if (voice->channel == channel && voice->note == note) {
+      voice->key_off();
+    }
+  }
+
   m_seq_ptr += 2;
 }
 
@@ -113,8 +133,18 @@ void midi_handler::channel_pressure() {
   u8 channel = m_status & 0xf;
   u8 note = m_seq_ptr[0];
   // fmt::print("{}: channel pressure {:02x} {:02x}\n", m_time, m_status, m_seq_ptr[0]);
-  //  TODO we need tracking for who owns the voices
-  m_synth.key_off(channel, note, (u64)this);
+
+  for (auto& v : m_voices) {
+    auto voice = v.lock();
+    if (voice == nullptr) {
+      continue;
+    }
+
+    if (voice->channel == channel && voice->note == note) {
+      voice->key_off();
+    }
+  }
+
   m_seq_ptr += 1;
 }
 
@@ -175,6 +205,7 @@ void midi_handler::system_event() {
 
 bool midi_handler::tick() {
   try {
+    m_voices.remove_if([](auto& v) { return v.expired(); });
     step();
   } catch (midi_error& e) {
     m_track_complete = true;
@@ -249,6 +280,7 @@ void midi_handler::step() {
           system_event();
           break;
         }
+        [[fallthrough]];
       default:
         throw midi_error(fmt::format("MIDI error: invalid status {}", m_status));
         return;

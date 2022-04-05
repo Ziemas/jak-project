@@ -4,7 +4,7 @@
 #include "loader.h"
 #include "midi_handler.h"
 #include "sound_handler.h"
-#include "../common/synth.h"
+#include "vagvoice.h"
 #include "common/common_types.h"
 #include <array>
 #include <forward_list>
@@ -17,7 +17,7 @@ class ame_handler : public sound_handler {
 
  public:
   ame_handler(MultiMIDIBlockHeader* block,
-              synth& synth,
+              voice_manager& vm,
               s32 vol,
               s32 pan,
               s8 repeats,
@@ -54,7 +54,7 @@ class ame_handler : public sound_handler {
 
   MultiMIDIBlockHeader* m_header{nullptr};
   locator& m_locator;
-  synth& m_synth;
+  voice_manager& m_vm;
   s32 m_vol{0};
   s32 m_pan{0};
   s8 m_repeats{0};

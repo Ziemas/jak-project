@@ -10,7 +10,7 @@
 
 namespace snd {
 
-player::player() : m_synth(m_loader) {
+player::player() : m_vmanager(m_synth, m_loader) {
 #ifdef _WIN32
   HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
   m_coinitialized = SUCCEEDED(hr);
@@ -114,7 +114,7 @@ u32 player::play_sound(u32 bank_id, u32 sound_id, s32 vol, s32 pan, s32 pm, s32 
     return 0;
   }
 
-  auto handler = bank->make_handler(m_synth, sound_id, vol, pan);
+  auto handler = bank->make_handler(m_vmanager, sound_id, vol, pan, pm, pb);
   if (handler == nullptr) {
     return 0;
   }
@@ -155,11 +155,19 @@ void player::set_master_volume(u32 group, s32 volume) {
   if (volume > 0x400)
     volume = 0x400;
 
+  if (volume < 0)
+    volume = 0;
+
+  if (group == 15)
+    return;
+
+  m_vmanager.set_master_vol(group, volume);
+
   // Master volume
   if (group == 16) {
     m_synth.set_master_vol(0x3ffff * volume / 0x400);
   } else {
-    m_synth.set_group_vol(group, volume);
+    // TODO adjust all active voices
   }
 }
 
@@ -190,4 +198,11 @@ void player::unload_bank(u32 bank_handle) {
   m_loader.unload_bank(bank_handle);
 }
 
+void player::set_pan_table(vol_pair* pantable) {
+  m_vmanager.set_pan_table(pantable);
+}
+
+void player::set_playback_mode(s32 mode) {
+  m_vmanager.set_playback_mode(mode);
+}
 }  // namespace snd
