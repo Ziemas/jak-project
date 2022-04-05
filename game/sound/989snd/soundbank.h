@@ -21,6 +21,7 @@ enum class BankType {
 
 class SoundBank {
  public:
+  virtual ~SoundBank() = default;
   BankType type;
   virtual std::unique_ptr<sound_handler> make_handler(voice_manager& vm,
                                                       u32 sound_id,
