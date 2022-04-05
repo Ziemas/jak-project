@@ -166,8 +166,6 @@ void player::set_master_volume(u32 group, s32 volume) {
   // Master volume
   if (group == 16) {
     m_synth.set_master_vol(0x3ffff * volume / 0x400);
-  } else {
-    // TODO adjust all active voices
   }
 }
 
