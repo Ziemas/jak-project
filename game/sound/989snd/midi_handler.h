@@ -69,6 +69,10 @@ class midi_handler : public sound_handler {
   void unmute_channel(u8 channel);
   u32 bank() { return m_bank; };
 
+  void pause() override;
+  void unpause() override;
+  u8 group() override { return m_group; }
+
   bool complete() { return m_track_complete; };
 
  private:
@@ -90,6 +94,8 @@ class midi_handler : public sound_handler {
   s32 m_pan{0};
   s8 m_repeats{0};
   u32 m_bank;
+
+  bool m_paused{false};
 
   MIDIBlockHeader* m_header{nullptr};
 

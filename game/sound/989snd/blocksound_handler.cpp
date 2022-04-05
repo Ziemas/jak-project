@@ -22,15 +22,18 @@ bool blocksound_handler::tick() {
   return m_done;
 };
 
+void blocksound_handler::pause() {}
+void blocksound_handler::unpause() {}
+
 void blocksound_handler::do_grain() {
   auto& grain = m_sfx.grains[m_next_grain];
 
   if (grain.Type == 1) {
-      // TODO passing m_pan here makes stuff sound bad, why?
-//      auto volume = make_volume(127, m_volume, m_pan, 127,
-//                                0, grain.GrainParams.tone.Vol, grain.GrainParams.tone.Pan);
+    // TODO passing m_pan here makes stuff sound bad, why?
+    //      auto volume = make_volume(127, m_volume, m_pan, 127,
+    //                                0, grain.GrainParams.tone.Vol, grain.GrainParams.tone.Pan);
 
-      //fmt::print("{:x}\n", grain.GrainParams.tone.VAGInSR);
+    // fmt::print("{:x}\n", grain.GrainParams.tone.VAGInSR);
   } else {
     fmt::print("Ignoring grain {}, type {}\n", m_next_grain, grain.Type);
   }

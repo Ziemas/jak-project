@@ -27,6 +27,10 @@ class ame_handler : public sound_handler {
   bool tick() override;
   u32 bank() override { return m_bank; };
 
+  void pause() override;
+  void unpause() override;
+  u8 group() override { return m_group; };
+
   void set_register(u8 reg, u8 value) { m_register[reg] = value; }
 
  private:

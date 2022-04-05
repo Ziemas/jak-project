@@ -22,8 +22,8 @@ ame_handler::ame_handler(MultiMIDIBlockHeader* block,
       m_bank(bank) {
   auto firstblock = (MIDIBlockHeader*)(block->BlockPtr[0] + (uintptr_t)block);
 
-  m_midis.emplace_front(std::make_unique<midi_handler>(firstblock, vm, vol, pan, repeats,
-                                                       m_group, loc, m_bank, this));
+  m_midis.emplace_front(std::make_unique<midi_handler>(firstblock, vm, vol, pan, repeats, m_group,
+                                                       loc, m_bank, this));
 };
 
 bool ame_handler::tick() {
@@ -44,7 +44,20 @@ void ame_handler::start_segment(u32 id) {
 }
 
 void ame_handler::stop_segment(u32 id) {
+  // TODO
   // fmt::print("stopping segment {}\n", id);
+}
+
+void ame_handler::pause() {
+  for (auto& m : m_midis) {
+    m->pause();
+  }
+}
+
+void ame_handler::unpause() {
+  for (auto& m : m_midis) {
+    m->unpause();
+  }
 }
 
 #define AME_BEGIN(op) \
