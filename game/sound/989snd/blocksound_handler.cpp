@@ -30,7 +30,7 @@ void blocksound_handler::do_grain() {
 //      auto volume = make_volume(127, m_volume, m_pan, 127,
 //                                0, grain.GrainParams.tone.Vol, grain.GrainParams.tone.Pan);
 
-      fmt::print("{:x}\n", grain.GrainParams.tone.VAGInSR);
+      //fmt::print("{:x}\n", grain.GrainParams.tone.VAGInSR);
   } else {
     fmt::print("Ignoring grain {}, type {}\n", m_next_grain, grain.Type);
   }
