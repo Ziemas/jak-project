@@ -230,7 +230,6 @@ vol_pair voice_manager::make_volume(int sound_vol,
   } else {
     rvol = (m_pan_table[total_pan - 180].left * vol) / 0x3fff;
     lvol = (m_pan_table[total_pan - 180].right * vol) / 0x3fff;
-    fmt::print("big pan\n");
     if (rvol < lvol) {
       rvol = -rvol;
     } else {

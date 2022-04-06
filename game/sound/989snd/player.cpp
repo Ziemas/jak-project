@@ -108,7 +108,6 @@ void player::tick(s16_output* stream, int samples) {
 u32 player::play_sound(u32 bank_id, u32 sound_id, s32 vol, s32 pan, s32 pm, s32 pb) {
   std::scoped_lock lock(m_ticklock);
   auto bank = m_loader.get_bank_by_handle(bank_id);
-  // fmt::print("play_sound {}:{}\n", bank_id, sound_id);
   if (bank == nullptr) {
     fmt::print("play_sound: Bank {} does not exist\n", bank_id);
     return 0;
@@ -121,12 +120,14 @@ u32 player::play_sound(u32 bank_id, u32 sound_id, s32 vol, s32 pan, s32 pm, s32 
 
   u32 handle = m_handle_allocator.get_id();
   m_handlers.emplace(handle, std::move(handler));
+  fmt::print("play_sound {}:{} - {}\n", bank_id, sound_id, handle);
 
   return handle;
 }
 
 void player::stop_sound(u32 sound_handle) {
   std::scoped_lock lock(m_ticklock);
+  fmt::print("stop_sound \n", sound_handle);
   m_handle_allocator.free_id(sound_handle);
   m_handlers.erase(sound_handle);
 }
@@ -148,6 +149,7 @@ bool player::sound_still_active(u32 sound_id) {
   if (handler == m_handlers.end())
     return false;
 
+  // fmt::print("sound_still_active {}\n", sound_id);
   return true;
 }
 
@@ -245,4 +247,5 @@ void player::continue_all_sounds_in_group(u8 group) {
   }
 }
 
+void set_sound_vol_pan(s32 sound_handle, s32 vol, s32 pan) {}
 }  // namespace snd

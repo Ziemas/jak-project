@@ -10,6 +10,7 @@
 #include "sbank.h"
 #include "iso_api.h"
 #include "common/util/Assert.h"
+#include "third-party/fmt/core.h"
 
 using namespace iop;
 
@@ -73,6 +74,9 @@ u32 Thread_Loader() {
 }
 
 void* RPC_Player(unsigned int /*fno*/, void* data, int size) {
+  static int batch = 0;
+  fmt::print("------------ RPC BATCH {} -------------\n", batch);
+  batch++;
   if (gSoundEnable) {
     //VBlank_Handler();
 

@@ -55,8 +55,7 @@ s32 snd_SoundIsStillPlaying(s32 sound_handle) {
 void snd_StopSound(s32 handle) {
   player->stop_sound(handle);
 }
-void snd_SetSoundVolPan(s32, s32, s32) {
-  // printf("snd_SetSoundVolPan\n");
+void snd_SetSoundVolPan(s32 sound_handle, s32 vol, s32 pan) {
 }
 void snd_SetMasterVolume(s32 group, s32 volume) {
   // printf("setting group %d to %d\n", group, volume);

@@ -43,6 +43,7 @@ class player {
   void continue_sound(s32 sound_handle);
   void pause_all_sounds_in_group(u8 group);
   void continue_all_sounds_in_group(u8 group);
+  void set_sound_vol_pan(s32 sound_handle, s32 vol, s32 pan);
 
  private:
   std::recursive_mutex m_ticklock;  // TODO does not need to recursive with some light restructuring
