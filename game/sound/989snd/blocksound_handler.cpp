@@ -88,6 +88,8 @@ void blocksound_handler::do_grain() {
   if (m_next_grain >= m_sfx.grains.size() - 1) {
     m_done = true;
   }
+
+  m_countdown = m_sfx.grains[m_next_grain].Delay;
 }
 
 }  // namespace snd
