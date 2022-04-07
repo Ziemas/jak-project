@@ -74,9 +74,6 @@ u32 Thread_Loader() {
 }
 
 void* RPC_Player(unsigned int /*fno*/, void* data, int size) {
-  static int batch = 0;
-  fmt::print("------------ RPC BATCH {} -------------\n", batch);
-  batch++;
   if (gSoundEnable) {
     //VBlank_Handler();
 
