@@ -20,49 +20,54 @@ ame_handler::ame_handler(MultiMIDIBlockHeader* block,
       m_repeats(repeats),
       m_group(group),
       m_bank(bank) {
-  auto firstblock = (MIDIBlockHeader*)(block->BlockPtr[0] + (uintptr_t)block);
-
-  m_midis.emplace_front(std::make_unique<midi_handler>(firstblock, vm, vol, pan, repeats, m_group,
-                                                       loc, m_bank, this));
+  start_segment(0);
 };
 
 bool ame_handler::tick() {
-  for (auto& m : m_midis) {
-    m->tick();
+  for (auto it = m_midis.begin(); it != m_midis.end();) {
+    bool done = it->second->tick();
+    if (done) {
+      it = m_midis.erase(it);
+    } else {
+      it++;
+    }
   }
-
-  m_midis.remove_if([](std::unique_ptr<midi_handler>& m) { return m->complete(); });
 
   return m_midis.empty();
 };
 
 void ame_handler::start_segment(u32 id) {
   auto midiblock = (MIDIBlockHeader*)(m_header->BlockPtr[id] + (uintptr_t)m_header);
-  // fmt::print("starting segment {}\n", id);
-  m_midis.emplace_front(std::make_unique<midi_handler>(midiblock, m_vm, m_vol, m_pan, m_repeats,
-                                                       m_group, m_locator, m_bank, this));
+  fmt::print("starting segment {}\n", id);
+  m_midis.emplace(id, std::make_unique<midi_handler>(midiblock, m_vm, m_vol, m_pan, m_repeats,
+                                                     m_group, m_locator, m_bank, this));
 }
 
 void ame_handler::stop() {
-  for (auto& m : m_midis) {
-    m->stop();
+  for (auto it = m_midis.begin(); it != m_midis.end();) {
+    it->second->stop();
+    it = m_midis.erase(it);
   }
 }
 
 void ame_handler::stop_segment(u32 id) {
-  // TODO
-  // fmt::print("stopping segment {}\n", id);
+  auto m = m_midis.find(id);
+  if (m == m_midis.end())
+    return;
+
+  m->second->stop();
+  m_midis.erase(id);
 }
 
 void ame_handler::pause() {
   for (auto& m : m_midis) {
-    m->pause();
+    m.second->pause();
   }
 }
 
 void ame_handler::unpause() {
   for (auto& m : m_midis) {
-    m->unpause();
+    m.second->unpause();
   }
 }
 
@@ -106,6 +111,11 @@ std::pair<bool, u8*> ame_handler::run_ame(midi_handler& midi, u8* stream) {
         if (m_excite > (stream[0] + 1)) {
           skip = 1;
         }
+        AME_END(1)
+      } break;
+      case 0x3: {
+        AME_BEGIN(op)
+        stop_segment(stream[0]);
         AME_END(1)
       } break;
       case 0x4: {

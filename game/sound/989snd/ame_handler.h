@@ -7,7 +7,6 @@
 #include "vagvoice.h"
 #include "common/common_types.h"
 #include <array>
-#include <forward_list>
 
 namespace snd {
 
@@ -65,7 +64,7 @@ class ame_handler : public sound_handler {
   s8 m_repeats{0};
   u32 m_group{0};
 
-  std::forward_list<std::unique_ptr<midi_handler>> m_midis;
+  std::unordered_map<u32, std::unique_ptr<midi_handler>> m_midis;
 
   u8 m_excite{0};
   std::array<GroupDescription, 16> m_groups{};
