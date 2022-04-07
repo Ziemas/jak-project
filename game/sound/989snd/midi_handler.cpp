@@ -112,8 +112,8 @@ void midi_handler::note_on() {
       }
 
       auto voice = std::make_shared<midi_voice>(t);
-      voice->basevol = m_vm.make_volume(m_vol, (velocity * m_chanvol[channel]) / 0x7f, pan,
-                                        program.d.Vol, program.d.Pan, t.Vol, t.Pan);
+      voice->basevol = m_vm.make_volume_b(m_vol, (velocity * m_chanvol[channel]) / 0x7f, pan,
+                                          program.d.Vol, program.d.Pan, t.Vol, t.Pan);
 
       voice->note = note;
       voice->channel = channel;
