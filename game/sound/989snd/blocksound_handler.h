@@ -16,6 +16,7 @@ class blocksound_handler : public sound_handler {
 
   void pause() override;
   void unpause() override;
+  void stop() override;
   u8 group() override { return m_group; };
   void init();
 

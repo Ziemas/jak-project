@@ -5,22 +5,24 @@ void blocksound_handler::init() {
   m_next_grain = 0;
   m_countdown = m_sfx.grains[0].Delay;
 
-  if (m_sfx.d.Flags & 2) {
-    fmt::print("solo flag\n");
-    m_done = true;
-    return;
-  }
+  // if (m_sfx.d.Flags & 2) {
+  //   fmt::print("solo flag\n");
+  //   m_done = true;
+  //   return;
+  // }
 
-  if (!m_countdown) {
+  while (m_countdown <= 0 && !m_done) {
     do_grain();
   }
 }
 
 bool blocksound_handler::tick() {
-  m_voices.remove_if([](auto& p) { return p.expired(); });
+  m_voices.remove_if([](std::weak_ptr<vag_voice>& p) { return p.expired(); });
+
   if (m_done) {
     if (m_voices.empty()) {
-      return true;
+      fmt::print("{}: voices empty\n", (void*)this);
+      return m_done;
     } else {
       return false;
     }
@@ -30,7 +32,7 @@ bool blocksound_handler::tick() {
     return false;
 
   m_countdown--;
-  if (m_countdown <= 0) {
+  while (m_countdown <= 0 && !m_done) {
     do_grain();
   }
 
@@ -63,6 +65,19 @@ void blocksound_handler::unpause() {
   }
 }
 
+void blocksound_handler::stop() {
+  m_done = true;
+
+  for (auto& p : m_voices) {
+    auto voice = p.lock();
+    if (voice == nullptr) {
+      continue;
+    }
+
+    voice->key_off();
+  }
+}
+
 void blocksound_handler::do_grain() {
   auto& grain = m_sfx.grains[m_next_grain];
 
@@ -81,11 +96,11 @@ void blocksound_handler::do_grain() {
     m_vm.start_tone(voice);
     m_voices.emplace_front(voice);
   } else {
-    fmt::print("Ignoring grain {}, type {}\n", m_next_grain, grain.Type);
+    fmt::print("{}: Ignoring grain {}, type {}\n", (void*)this, m_next_grain, grain.Type);
   }
 
   m_next_grain++;
-  if (m_next_grain >= m_sfx.grains.size() - 1) {
+  if (m_next_grain >= m_sfx.grains.size()) {
     m_done = true;
   }
 
