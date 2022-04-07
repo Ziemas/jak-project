@@ -57,13 +57,16 @@ class voice_manager {
   void unpause(std::shared_ptr<vag_voice> voice);
   void set_pan_table(vol_pair* table) { m_pan_table = table; };
 
-  vol_pair make_volume(int sound_vol,
-                       int velocity_volume,
-                       int pan,
-                       int prog_vol,
-                       int prog_pan,
-                       int tone_vol,
-                       int tone_pan);
+  vol_pair make_volume(int vol1, int pan1, int vol2, int pan2, int vol3, int pan3);
+
+  // This is super silly, but it's what 989snd does
+  vol_pair make_volume_b(int sound_vol,
+                         int velocity_volume,
+                         int pan,
+                         int prog_vol,
+                         int prog_pan,
+                         int tone_vol,
+                         int tone_pan);
 
   void set_master_vol(u8 group, s32 volume);
   void set_playback_mode(s32 mode) { m_stereo_or_mono = mode; }

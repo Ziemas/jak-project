@@ -84,10 +84,8 @@ void blocksound_handler::do_grain() {
   if (grain.Type == 1) {
     auto voice = std::make_shared<vag_voice>(grain.GrainParams.tone);
 
-    auto volume = m_vm.make_volume(127, m_volume, m_pan, 127, 0, grain.GrainParams.tone.Vol,
+    voice->basevol = m_vm.make_volume(127, 0, m_volume, m_pan, grain.GrainParams.tone.Vol,
                                    grain.GrainParams.tone.Pan);
-
-    voice->basevol = volume;
 
     voice->start_note = m_note;
     voice->start_fine = m_fine;
