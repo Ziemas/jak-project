@@ -43,6 +43,12 @@ void ame_handler::start_segment(u32 id) {
                                                        m_group, m_locator, m_bank, this));
 }
 
+void ame_handler::stop() {
+  for (auto& m : m_midis) {
+    m->stop();
+  }
+}
+
 void ame_handler::stop_segment(u32 id) {
   // TODO
   // fmt::print("stopping segment {}\n", id);

@@ -70,6 +70,7 @@ class midi_handler : public sound_handler {
   u32 bank() { return m_bank; };
 
   void pause() override;
+  void stop() override;
   void unpause() override;
   u8 group() override { return m_group; }
 
