@@ -125,11 +125,16 @@ u32 player::play_sound(u32 bank_id, u32 sound_id, s32 vol, s32 pan, s32 pm, s32 
   return handle;
 }
 
-void player::stop_sound(u32 sound_handle) {
+void player::stop_sound(u32 sound_id) {
   std::scoped_lock lock(m_ticklock);
-  fmt::print("stop_sound \n", sound_handle);
-  m_handle_allocator.free_id(sound_handle);
-  m_handlers.erase(sound_handle);
+  auto handler = m_handlers.find(sound_id);
+  if (handler == m_handlers.end())
+    return;
+
+  handler->second->stop();
+
+  m_handle_allocator.free_id(sound_id);
+  m_handlers.erase(sound_id);
 }
 
 void player::set_midi_reg(u32 sound_id, u8 reg, u8 value) {
@@ -247,5 +252,7 @@ void player::continue_all_sounds_in_group(u8 group) {
   }
 }
 
-void set_sound_vol_pan(s32 sound_handle, s32 vol, s32 pan) {}
+void player::set_sound_vol_pan(s32 sound_handle, s32 vol, s32 pan) {
+
+}
 }  // namespace snd

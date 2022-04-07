@@ -33,14 +33,4 @@ void synth::set_master_vol(u32 volume) {
   m_Volume.left.Set(volume);
   m_Volume.right.Set(volume);
 }
-
-/*
-void synth::key_on(Tone& tone, u8 channel, u8 note, vol_pair volume, u64 owner, u32 group) {
-auto v = std::make_unique<voice>((u16*)(m_locator.get_bank_samples(tone.BankID) + tone.VAGInSR),
-                                 channel, owner, note);
-
-
-m_voices.emplace_front(std::move(v));
-}
-*/
 }  // namespace snd

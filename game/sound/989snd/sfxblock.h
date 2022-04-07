@@ -99,6 +99,7 @@ struct SFXData {
 };
 
 enum SFXFlags {
+  Looper = 1,
   SoloSound = 2,  // Stop previous instances
 };
 

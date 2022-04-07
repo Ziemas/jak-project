@@ -13,5 +13,6 @@ class sound_handler {
   virtual void pause() = 0;
   virtual void unpause() = 0;
   virtual u8 group() = 0;
+  virtual void stop() = 0;
 };
 }  // namespace snd

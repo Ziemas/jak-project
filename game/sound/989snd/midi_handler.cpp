@@ -59,6 +59,19 @@ void midi_handler::unpause() {
   }
 }
 
+void midi_handler::stop() {
+  m_track_complete = true;
+
+  for (auto& p : m_voices) {
+    auto voice = p.lock();
+    if (voice == nullptr) {
+      continue;
+    }
+
+    voice->key_off();
+  }
+}
+
 void midi_handler::mute_channel(u8 channel) {
   // fmt::print("{:x} ame muting channel {}\n", (u64)this, channel);
   m_mute_state[channel] = true;
