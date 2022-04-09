@@ -29,6 +29,7 @@ class ame_handler : public sound_handler {
   void unpause() override;
   void stop() override;
   u8 group() override { return m_sound.VolGroup; };
+  void set_vol_pan(s32 vol, s32 pan) override;
 
   void set_register(u8 reg, u8 value) { m_register[reg] = value; }
 

@@ -18,6 +18,8 @@ class blocksound_handler : public sound_handler {
   void unpause() override;
   void stop() override;
   u8 group() override { return m_group; };
+  void set_vol_pan(s32 vol, s32 pan) override;
+
   void init();
 
  private:

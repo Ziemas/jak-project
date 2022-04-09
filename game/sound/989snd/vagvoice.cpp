@@ -176,12 +176,7 @@ void voice_manager::start_tone(std::shared_ptr<vag_voice> voice) {
   m_voices.emplace_front(voice);
   m_synth.add_voice(voice);
 }
-vol_pair voice_manager::make_volume(int vol1,
-                                    int pan1,
-                                    int vol2,
-                                    int pan2,
-                                    int vol3,
-                                    int pan3) {
+vol_pair voice_manager::make_volume(int vol1, int pan1, int vol2, int pan2, int vol3, int pan3) {
   // Scale up as close as we can to max positive 16bit volume
   // I'd have just used shifting but I guess this does get closer
 

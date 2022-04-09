@@ -72,6 +72,7 @@ class midi_handler : public sound_handler {
   void stop() override;
   void unpause() override;
   u8 group() override { return m_sound.VolGroup; }
+  void set_vol_pan(s32 vol, s32 pan) override;
 
   bool complete() { return m_track_complete; };
 

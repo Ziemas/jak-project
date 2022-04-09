@@ -78,6 +78,7 @@ void blocksound_handler::stop() {
   }
 }
 
+void blocksound_handler::set_vol_pan(s32 vol, s32 pan) {}
 void blocksound_handler::do_grain() {
   auto& grain = m_sfx.grains[m_next_grain];
 
