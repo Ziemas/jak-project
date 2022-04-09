@@ -95,7 +95,7 @@ void player::tick(s16_output* stream, int samples) {
     }
 
     if (stick == 48000) {
-      fmt::print("{} handlers active\n", m_handlers.size());
+      //fmt::print("{} handlers active\n", m_handlers.size());
       stick = 0;
     }
 
@@ -252,7 +252,12 @@ void player::continue_all_sounds_in_group(u8 group) {
   }
 }
 
-void player::set_sound_vol_pan(s32 sound_handle, s32 vol, s32 pan) {
+void player::set_sound_vol_pan(s32 sound_id, s32 vol, s32 pan) {
+  std::scoped_lock lock(m_ticklock);
+  auto handler = m_handlers.find(sound_id);
+  if (handler == m_handlers.end())
+    return;
 
+  handler->second->set_vol_pan(vol, pan);
 }
 }  // namespace snd
