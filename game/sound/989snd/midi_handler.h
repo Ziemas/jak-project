@@ -66,7 +66,7 @@ class midi_handler : public sound_handler {
   bool tick() override;
   void mute_channel(u8 channel);
   void unmute_channel(u8 channel);
-  u32 bank() { return m_bank; };
+  u32 bank() override { return m_bank; };
 
   void pause() override;
   void stop() override;

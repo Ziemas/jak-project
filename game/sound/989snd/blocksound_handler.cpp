@@ -78,7 +78,43 @@ void blocksound_handler::stop() {
   }
 }
 
-void blocksound_handler::set_vol_pan(s32 vol, s32 pan) {}
+void blocksound_handler::set_vol_pan(s32 vol, s32 pan) {
+  if (vol >= 0) {
+    if (vol != VOLUME_DONT_CHANGE) {
+      m_volume = (vol * m_sfx.d.Vol) >> 10;
+    }
+  } else {
+    m_volume = -1024 * vol / 127;
+  }
+
+  if (pan == PAN_RESET) {
+    m_pan = m_sfx.d.Pan;
+  } else if (pan != PAN_DONT_CHANGE) {
+    m_pan = pan;
+  }
+
+  while (pan >= 360) {
+    pan -= 360;
+  }
+
+  while (pan < 0) {
+    pan += 360;
+  }
+
+  for (auto& p : m_voices) {
+    auto voice = p.lock();
+    if (voice == nullptr) {
+      continue;
+    }
+
+    auto volume = m_vm.make_volume(127, 0, m_volume, m_pan, voice->tone.Vol, voice->tone.Pan);
+    auto left = m_vm.adjust_vol_to_group(volume.left, m_sfx.d.VolGroup);
+    auto right = m_vm.adjust_vol_to_group(volume.right, m_sfx.d.VolGroup);
+
+    voice->set_volume(left >> 1, right >> 1);
+  }
+}
+
 void blocksound_handler::do_grain() {
   auto& grain = m_sfx.grains[m_next_grain];
 
