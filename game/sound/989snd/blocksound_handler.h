@@ -5,6 +5,10 @@
 #include "common/common_types.h"
 
 namespace snd {
+static constexpr int PAN_RESET = -1;
+static constexpr int PAN_DONT_CHANGE = -2;
+static constexpr int VOLUME_DONT_CHANGE = 0x7fffffff;
+
 class blocksound_handler : public sound_handler {
  public:
   blocksound_handler(SFX& sfx, voice_manager& vm, s32 vol, s32 pan, u32 bank_id)

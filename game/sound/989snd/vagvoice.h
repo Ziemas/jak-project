@@ -75,6 +75,7 @@ class voice_manager {
 
   void set_master_vol(u8 group, s32 volume);
   void set_playback_mode(s32 mode) { m_stereo_or_mono = mode; }
+  s16 adjust_vol_to_group(s16 involume, int group);
 
  private:
   synth& m_synth;
@@ -84,8 +85,6 @@ class voice_manager {
   void clean_voices() {
     m_voices.remove_if([](auto& v) { return v.expired(); });
   }
-
-  s16 adjust_vol_to_group(s16 involume, int group);
 
   s32 m_stereo_or_mono{0};
 
