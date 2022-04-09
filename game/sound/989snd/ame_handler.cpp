@@ -1,6 +1,7 @@
 // Copyright: 2021 - 2022, Ziemas
 // SPDX-License-Identifier: ISC
 #include "ame_handler.h"
+#include "game/sound/989snd/blocksound_handler.h"
 
 namespace snd {
 
@@ -72,8 +73,8 @@ void ame_handler::unpause() {
 
 void ame_handler::set_vol_pan(s32 vol, s32 pan) {
   if (vol >= 0) {
-    if (vol != 0x7fffffff) {
-      // need ref to sound
+    if (vol != VOLUME_DONT_CHANGE) {
+      m_vol = (m_sound.Vol * vol) >> 10;
     }
   } else {
     m_vol = -vol;
@@ -83,9 +84,9 @@ void ame_handler::set_vol_pan(s32 vol, s32 pan) {
     m_vol = 127;
   }
 
-  if (pan == -1) {
-    // og sound pan
-  } else if (pan != -2) {
+  if (pan == PAN_RESET) {
+    m_pan = m_sound.Pan;
+  } else if (pan != PAN_DONT_CHANGE) {
     m_pan = pan;
   }
 

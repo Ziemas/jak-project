@@ -72,7 +72,10 @@ void midi_handler::stop() {
   }
 }
 
-void midi_handler::set_vol_pan(s32 vol, s32 pan) {}
+void midi_handler::set_vol_pan(s32 vol, s32 pan) {
+  // TODO
+
+}
 
 void midi_handler::mute_channel(u8 channel) {
   // fmt::print("{:x} ame muting channel {}\n", (u64)this, channel);
