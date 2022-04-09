@@ -39,21 +39,20 @@ class midi_handler : public sound_handler {
  public:
   midi_handler(MIDIBlockHeader* block,
                voice_manager& vm,
+               MIDISound& sound,
                s32 vol,
                s32 pan,
-               s8 repeats,
-               u32 group,
                locator& loc,
                u32 bank,
                std::optional<ame_handler*> parent = std::nullopt)
       : m_parent(parent),
+        m_sound(sound),
         m_locator(loc),
         m_vol(vol),
         m_pan(pan),
-        m_repeats(repeats),
+        m_repeats(sound.Repeats),
         m_bank(bank),
         m_header(block),
-        m_group(group),
         m_vm(vm) {
     m_seq_data_start = (u8*)((uintptr_t)block + (uintptr_t)block->DataStart);
     m_seq_ptr = m_seq_data_start;
@@ -72,7 +71,7 @@ class midi_handler : public sound_handler {
   void pause() override;
   void stop() override;
   void unpause() override;
-  u8 group() override { return m_group; }
+  u8 group() override { return m_sound.VolGroup; }
 
   bool complete() { return m_track_complete; };
 
@@ -90,6 +89,7 @@ class midi_handler : public sound_handler {
 
   std::list<std::weak_ptr<midi_voice>> m_voices;
 
+  MIDISound& m_sound;
   locator& m_locator;
   s32 m_vol{0x7f};
   s32 m_pan{0};
@@ -114,7 +114,6 @@ class midi_handler : public sound_handler {
   s32 m_tickerror{0};
   s32 m_tickdelta{0};
   s32 m_ppt{0};
-  u32 m_group{0};
   u64 m_tick_countdown{0};
   bool m_get_delta{true};
   bool m_track_complete{false};
