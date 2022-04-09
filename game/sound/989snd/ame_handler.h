@@ -17,10 +17,9 @@ class ame_handler : public sound_handler {
  public:
   ame_handler(MultiMIDIBlockHeader* block,
               voice_manager& vm,
+              MIDISound& sound,
               s32 vol,
               s32 pan,
-              s8 repeats,
-              u32 group,
               locator& loc,
               u32 bank);
   bool tick() override;
@@ -29,7 +28,7 @@ class ame_handler : public sound_handler {
   void pause() override;
   void unpause() override;
   void stop() override;
-  u8 group() override { return m_group; };
+  u8 group() override { return m_sound.VolGroup; };
 
   void set_register(u8 reg, u8 value) { m_register[reg] = value; }
 
@@ -54,7 +53,8 @@ class ame_handler : public sound_handler {
   void stop_segment(u32 id);
   std::pair<bool, u8*> run_ame(midi_handler&, u8* stream);
 
-  u32 m_bank;
+  MIDISound& m_sound;
+  u32 m_bank{0};
 
   MultiMIDIBlockHeader* m_header{nullptr};
   locator& m_locator;
@@ -62,7 +62,6 @@ class ame_handler : public sound_handler {
   s32 m_vol{0};
   s32 m_pan{0};
   s8 m_repeats{0};
-  u32 m_group{0};
 
   std::unordered_map<u32, std::unique_ptr<midi_handler>> m_midis;
 
