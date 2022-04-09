@@ -70,6 +70,30 @@ void ame_handler::unpause() {
   }
 }
 
+void ame_handler::set_vol_pan(s32 vol, s32 pan) {
+  if (vol >= 0) {
+    if (vol != 0x7fffffff) {
+      // need ref to sound
+    }
+  } else {
+    m_vol = -vol;
+  }
+
+  if (m_vol >= 128) {
+    m_vol = 127;
+  }
+
+  if (pan == -1) {
+    // og sound pan
+  } else if (pan != -2) {
+    m_pan = pan;
+  }
+
+  for (auto& m : m_midis) {
+    m.second->set_vol_pan(vol, pan);
+  }
+}
+
 #define AME_BEGIN(op) \
   if (skip) {         \
     if (skip == 1) {  \

@@ -13,7 +13,7 @@ std::unique_ptr<sound_handler> SFXBlock::make_handler(voice_manager& vm,
 
   if (SFX.grains.empty()) {
 
-    fmt::print("skipping empty sfx\n");
+    //fmt::print("skipping empty sfx\n");
     return nullptr;
   }
 
