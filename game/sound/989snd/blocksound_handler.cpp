@@ -1,4 +1,5 @@
 #include "blocksound_handler.h"
+#include <random>
 
 namespace snd {
 void blocksound_handler::init() {
@@ -21,7 +22,7 @@ bool blocksound_handler::tick() {
 
   if (m_done) {
     if (m_voices.empty()) {
-      fmt::print("{}: voices empty\n", (void*)this);
+      // fmt::print("{}: voices empty\n", (void*)this);
       return m_done;
     } else {
       return false;
@@ -130,8 +131,40 @@ void blocksound_handler::do_grain() {
 
     m_vm.start_tone(voice);
     m_voices.emplace_front(voice);
+  } else if (grain.Type == 25) {
+    int options = grain.GrainParams.control.param[0];
+    int count = grain.GrainParams.control.param[1];
+    int previous = grain.GrainParams.control.param[2];
+    fmt::print("rnd play options: {} count: {} prev: {} gc: {}\n", options, count, previous, m_sfx.grains.size());
+    for (int i = 0; i < m_sfx.grains.size(); i++) {
+      fmt::print(" type {} delay {}\n", m_sfx.grains[i].Type, m_sfx.grains[i].Delay);
+
+    }
+
+    int rnd = rand() % options;
+    if (rnd == previous) {
+      rnd++;
+      if (rnd >= options) {
+        rnd = 0;
+      }
+    }
+
+    grain.GrainParams.control.param[2] = rnd;
+    m_next_grain = rnd * count;
+    m_grains_to_play = count + 1;
+    m_grains_to_skip = (options - 1 - rnd) * count;
+    m_skip_grains = true;
+    fmt::print("playing grain {} skipping {}\n", m_next_grain, m_grains_to_skip);
   } else {
     fmt::print("{}: Ignoring grain {}, type {}\n", (void*)this, m_next_grain, grain.Type);
+  }
+
+  if (m_skip_grains) {
+    if (--m_grains_to_play == 0) {
+      fmt::print("skipping from {} to {}\n", m_next_grain, m_next_grain+m_grains_to_skip);
+      m_next_grain += m_grains_to_skip;
+      m_skip_grains = false;
+    }
   }
 
   m_next_grain++;
