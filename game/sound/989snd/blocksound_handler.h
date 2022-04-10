@@ -34,6 +34,10 @@ class blocksound_handler : public sound_handler {
   u8 m_group{0};
   bool m_done{false};
 
+  u32 m_grains_to_play{0};
+  u32 m_grains_to_skip{0};
+  bool m_skip_grains{false};
+
   SFX& m_sfx;
   voice_manager& m_vm;
 

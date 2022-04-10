@@ -120,7 +120,7 @@ u32 player::play_sound(u32 bank_id, u32 sound_id, s32 vol, s32 pan, s32 pm, s32 
 
   u32 handle = m_handle_allocator.get_id();
   m_handlers.emplace(handle, std::move(handler));
-  fmt::print("play_sound {}:{} - {}\n", bank_id, sound_id, handle);
+  //fmt::print("play_sound {}:{} - {}\n", bank_id, sound_id, handle);
 
   return handle;
 }
@@ -140,7 +140,7 @@ void player::stop_sound(u32 sound_id) {
 void player::set_midi_reg(u32 sound_id, u8 reg, u8 value) {
   std::scoped_lock lock(m_ticklock);
   if (m_handlers.find(sound_id) == m_handlers.end()) {
-    fmt::print("set_midi_reg: Handler {} does not exist\n", sound_id);
+    //fmt::print("set_midi_reg: Handler {} does not exist\n", sound_id);
     return;
   }
 
