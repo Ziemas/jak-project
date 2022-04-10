@@ -37,7 +37,7 @@ bool blocksound_handler::tick() {
     do_grain();
   }
 
-  return m_done;
+  return false;
 };
 
 void blocksound_handler::pause() {
