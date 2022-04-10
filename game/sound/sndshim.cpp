@@ -12,6 +12,10 @@ void snd_StopSoundSystem() {
   player.reset();
 }
 
+s32 snd_GetTick() {
+  return player->get_tick();
+}
+
 void snd_RegisterIOPMemAllocator(AllocFun, FreeFun) {
   // printf("snd_RegisterIOPMemAllocator\n");
 }
