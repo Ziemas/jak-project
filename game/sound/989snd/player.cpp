@@ -74,6 +74,7 @@ void player::state_callback([[maybe_unused]] cubeb_stream* stream,
 
 void player::tick(s16_output* stream, int samples) {
   std::scoped_lock lock(m_ticklock);
+  m_tick++;
   static int htick = 200;
   static int stick = 48000;
   for (int i = 0; i < samples; i++) {
