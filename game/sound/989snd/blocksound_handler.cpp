@@ -160,7 +160,8 @@ void blocksound_handler::do_grain() {
   }
 
   if (m_skip_grains) {
-    if (--m_grains_to_play == 0) {
+    m_grains_to_play--;
+    if (m_grains_to_play == 0) {
       fmt::print("skipping from {} to {}\n", m_next_grain, m_next_grain+m_grains_to_skip);
       m_next_grain += m_grains_to_skip;
       m_skip_grains = false;
