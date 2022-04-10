@@ -150,7 +150,7 @@ void blocksound_handler::do_grain() {
     }
 
     grain.GrainParams.control.param[2] = rnd;
-    m_next_grain = rnd * count;
+    m_next_grain += rnd * count;
     m_grains_to_play = count + 1;
     m_grains_to_skip = (options - 1 - rnd) * count;
     m_skip_grains = true;
