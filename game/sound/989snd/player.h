@@ -44,6 +44,7 @@ class player {
   void pause_all_sounds_in_group(u8 group);
   void continue_all_sounds_in_group(u8 group);
   void set_sound_vol_pan(s32 sound_handle, s32 vol, s32 pan);
+  s32 get_tick() { return m_tick; };
 
  private:
   std::recursive_mutex m_ticklock;  // TODO does not need to recursive with some light restructuring
@@ -59,6 +60,7 @@ class player {
   loader m_loader;
   synth m_synth;
   voice_manager m_vmanager;
+  s32 m_tick{0};
 
   cubeb* m_ctx{nullptr};
   cubeb_stream* m_stream{nullptr};
