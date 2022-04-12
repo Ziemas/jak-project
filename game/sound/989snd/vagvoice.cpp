@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: ISC
 #include "vagvoice.h"
 #include "../common/voice.h"
+#include <stdexcept>
 
 namespace snd {
 static u16 NotePitchTable[] = {
