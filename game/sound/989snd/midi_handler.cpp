@@ -200,18 +200,20 @@ void midi_handler::channel_pitch() {
 }
 
 void midi_handler::meta_event() {
-  fmt::print("{}: meta event {:02x}\n", m_time, *m_seq_ptr);
+  // fmt::print("{}: meta event {:02x}\n", m_time, *m_seq_ptr);
   size_t len = m_seq_ptr[1];
 
   if (*m_seq_ptr == 0x2f) {
     m_seq_ptr = m_seq_data_start;
-    m_repeats--;
 
-    if (m_repeats <= 0) {
-      fmt::print("End of track, no more repeats!\n");
+    // If repeats was 0 we'll go negative, fail this test, and loop infinitely as intended
+    m_repeats--;
+    if (m_repeats == 0) {
       m_track_complete = true;
-    } else {
-      fmt::print("End of track, repeating!\n");
+    }
+
+    if (m_repeats < 0) {
+      m_repeats = 0;
     }
 
     return;
