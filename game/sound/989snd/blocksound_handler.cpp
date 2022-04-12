@@ -82,18 +82,26 @@ void blocksound_handler::stop() {
 void blocksound_handler::set_vol_pan(s32 vol, s32 pan) {
   if (vol >= 0) {
     if (vol != VOLUME_DONT_CHANGE) {
-      m_volume = (vol * m_sfx.d.Vol) >> 10;
+      m_app_volume = (vol * m_sfx.d.Vol) >> 10;
     }
   } else {
-    m_volume = -1024 * vol / 127;
+    m_app_volume = -vol;
+  }
+
+  if (m_app_volume >= 128) {
+    m_app_volume = 127;
   }
 
   if (pan == PAN_RESET) {
-    m_pan = m_sfx.d.Pan;
+    m_app_pan = m_sfx.d.Pan;
   } else if (pan != PAN_DONT_CHANGE) {
-    m_pan = pan;
+    m_app_pan = pan;
   }
 
+  vol = m_app_volume;  // + lfo vol
+  // TODO LFO logic here
+
+  pan = m_app_pan;  // + lfo pan
   while (pan >= 360) {
     pan -= 360;
   }
@@ -102,17 +110,23 @@ void blocksound_handler::set_vol_pan(s32 vol, s32 pan) {
     pan += 360;
   }
 
-  for (auto& p : m_voices) {
-    auto voice = p.lock();
-    if (voice == nullptr) {
-      continue;
+  if (pan != m_cur_pan || vol != m_cur_volume) {
+    m_cur_volume = vol;
+    m_cur_pan = pan;
+
+    for (auto& p : m_voices) {
+      auto voice = p.lock();
+      if (voice == nullptr) {
+        continue;
+      }
+
+      auto volume =
+          m_vm.make_volume(127, 0, m_cur_volume, m_cur_pan, voice->tone.Vol, voice->tone.Pan);
+      auto left = m_vm.adjust_vol_to_group(volume.left, m_sfx.d.VolGroup);
+      auto right = m_vm.adjust_vol_to_group(volume.right, m_sfx.d.VolGroup);
+
+      voice->set_volume(left >> 1, right >> 1);
     }
-
-    auto volume = m_vm.make_volume(127, 0, m_volume, m_pan, voice->tone.Vol, voice->tone.Pan);
-    auto left = m_vm.adjust_vol_to_group(volume.left, m_sfx.d.VolGroup);
-    auto right = m_vm.adjust_vol_to_group(volume.right, m_sfx.d.VolGroup);
-
-    voice->set_volume(left >> 1, right >> 1);
   }
 }
 
@@ -122,7 +136,7 @@ void blocksound_handler::do_grain() {
   if (grain.Type == 1) {
     auto voice = std::make_shared<vag_voice>(grain.GrainParams.tone);
 
-    voice->basevol = m_vm.make_volume(127, 0, m_volume, m_pan, grain.GrainParams.tone.Vol,
+    voice->basevol = m_vm.make_volume(127, 0, m_cur_volume, m_cur_pan, grain.GrainParams.tone.Vol,
                                       grain.GrainParams.tone.Pan);
 
     voice->start_note = m_note;
@@ -135,10 +149,10 @@ void blocksound_handler::do_grain() {
     int options = grain.GrainParams.control.param[0];
     int count = grain.GrainParams.control.param[1];
     int previous = grain.GrainParams.control.param[2];
-    fmt::print("rnd play options: {} count: {} prev: {} gc: {}\n", options, count, previous, m_sfx.grains.size());
+    fmt::print("rnd play options: {} count: {} prev: {} gc: {}\n", options, count, previous,
+               m_sfx.grains.size());
     for (int i = 0; i < m_sfx.grains.size(); i++) {
       fmt::print(" type {} delay {}\n", m_sfx.grains[i].Type, m_sfx.grains[i].Delay);
-
     }
 
     int rnd = rand() % options;
@@ -162,7 +176,7 @@ void blocksound_handler::do_grain() {
   if (m_skip_grains) {
     m_grains_to_play--;
     if (m_grains_to_play == 0) {
-      fmt::print("skipping from {} to {}\n", m_next_grain, m_next_grain+m_grains_to_skip);
+      fmt::print("skipping from {} to {}\n", m_next_grain, m_next_grain + m_grains_to_skip);
       m_next_grain += m_grains_to_skip;
       m_skip_grains = false;
     }

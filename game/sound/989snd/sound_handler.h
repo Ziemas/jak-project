@@ -4,6 +4,10 @@
 
 #include "common/common_types.h"
 
+static constexpr int PAN_RESET = -1;
+static constexpr int PAN_DONT_CHANGE = -2;
+static constexpr int VOLUME_DONT_CHANGE = 0x7fffffff;
+
 namespace snd {
 class sound_handler {
  public:

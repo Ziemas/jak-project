@@ -17,6 +17,66 @@ namespace snd {
 **
 */
 
+midi_handler::midi_handler(MIDIBlockHeader* block,
+                           voice_manager& vm,
+                           MIDISound& sound,
+                           s32 vol,
+                           s32 pan,
+                           locator& loc,
+                           u32 bank)
+    : m_sound(sound),
+      m_locator(loc),
+      m_repeats(sound.Repeats),
+      m_bank(bank),
+      m_header(block),
+      m_vm(vm) {
+  if (vol == VOLUME_DONT_CHANGE) {
+    vol = 1024;
+  }
+
+  m_vol = (vol * m_sound.Vol) >> 10;
+  if (m_vol >= 128) {
+    m_vol = 127;
+  }
+
+  if (pan == PAN_DONT_CHANGE || pan == PAN_RESET) {
+    m_pan = m_sound.Pan;
+  } else {
+    m_pan = pan;
+  }
+
+  init_midi();
+}
+
+midi_handler::midi_handler(MIDIBlockHeader* block,
+                           voice_manager& vm,
+                           MIDISound& sound,
+                           s32 vol,
+                           s32 pan,
+                           locator& loc,
+                           u32 bank,
+                           std::optional<ame_handler*> parent)
+    : m_parent(parent),
+      m_sound(sound),
+      m_locator(loc),
+      m_vol(vol),
+      m_pan(pan),
+      m_repeats(sound.Repeats),
+      m_bank(bank),
+      m_header(block),
+      m_vm(vm) {
+  init_midi();
+}
+
+void midi_handler::init_midi() {
+  m_seq_data_start = (u8*)((uintptr_t)m_header + (uintptr_t)m_header->DataStart);
+  m_seq_ptr = m_seq_data_start;
+  m_tempo = m_header->Tempo;
+  m_ppq = m_header->PPQ;
+  m_chanvol.fill(0x7f);
+  m_chanpan.fill(0);
+}
+
 std::pair<size_t, u32> midi_handler::read_vlq(u8* value) {
   size_t len = 1;
   u32 out = *value & 0x7f;
@@ -74,7 +134,6 @@ void midi_handler::stop() {
 
 void midi_handler::set_vol_pan(s32 vol, s32 pan) {
   // TODO
-
 }
 
 void midi_handler::mute_channel(u8 channel) {
