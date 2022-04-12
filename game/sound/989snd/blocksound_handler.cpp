@@ -171,6 +171,7 @@ void blocksound_handler::do_grain() {
   m_next_grain++;
   if (m_next_grain >= m_sfx.grains.size()) {
     m_done = true;
+    return;
   }
 
   m_countdown = m_sfx.grains[m_next_grain].Delay;
