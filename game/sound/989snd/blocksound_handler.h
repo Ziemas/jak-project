@@ -5,14 +5,29 @@
 #include "common/common_types.h"
 
 namespace snd {
-static constexpr int PAN_RESET = -1;
-static constexpr int PAN_DONT_CHANGE = -2;
-static constexpr int VOLUME_DONT_CHANGE = 0x7fffffff;
-
 class blocksound_handler : public sound_handler {
  public:
   blocksound_handler(SFX& sfx, voice_manager& vm, s32 vol, s32 pan, u32 bank_id)
-      : m_sfx(sfx), m_vm(vm), m_volume(vol), m_pan(pan), m_bank(bank_id) {
+      : m_sfx(sfx), m_vm(vm), m_bank(bank_id) {
+
+    vol = (vol * m_sfx.d.Vol) >> 10;
+    if (vol >= 128) {
+      vol = 127;
+    }
+
+    if (pan >= PAN_DONT_CHANGE) {
+      pan = m_sfx.d.Pan;
+    }
+
+    m_cur_volume = vol;
+    m_cur_pan = pan;
+
+    m_app_volume = vol;
+    m_app_pan = pan;
+
+    m_orig_pan = m_sfx.d.Pan;
+    m_orig_volume = m_sfx.d.Vol;
+
     m_group = sfx.d.VolGroup;
   }
   bool tick() override;
@@ -46,8 +61,16 @@ class blocksound_handler : public sound_handler {
   s32 m_current_pb{0};
   s32 m_current_pm{0};
 
-  s32 m_volume{0};
-  s32 m_pan{0};
+  s32 m_orig_volume{0};
+  s32 m_orig_pan{0};
+  s32 m_cur_volume{0};
+  s32 m_cur_pan{0};
+  s32 m_app_volume{0};
+  s32 m_app_pan{0};
+
+  s32 m_lfo_volume{0};
+  s32 m_lfo_pan{0};
+
   u32 m_bank{0};
 
   u8 m_note{60};

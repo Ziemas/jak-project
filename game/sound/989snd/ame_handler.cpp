@@ -17,9 +17,23 @@ ame_handler::ame_handler(MultiMIDIBlockHeader* block,
       m_header(block),
       m_locator(loc),
       m_vm(vm),
-      m_vol(vol),
-      m_pan(pan),
       m_repeats(sound.Repeats) {
+  if (vol == VOLUME_DONT_CHANGE) {
+    vol = 1024;
+  }
+
+  m_vol = (vol * m_sound.Vol) >> 10;
+
+  if (m_vol >= 128) {
+    m_vol = 127;
+  }
+
+  if (pan == PAN_DONT_CHANGE || pan == PAN_RESET) {
+    m_pan = m_sound.Pan;
+  } else {
+    m_pan = pan;
+  }
+
   start_segment(0);
 };
 
