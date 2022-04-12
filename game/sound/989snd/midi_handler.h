@@ -43,25 +43,18 @@ class midi_handler : public sound_handler {
                s32 vol,
                s32 pan,
                locator& loc,
-               u32 bank,
-               std::optional<ame_handler*> parent = std::nullopt)
-      : m_parent(parent),
-        m_sound(sound),
-        m_locator(loc),
-        m_vol(vol),
-        m_pan(pan),
-        m_repeats(sound.Repeats),
-        m_bank(bank),
-        m_header(block),
-        m_vm(vm) {
-    m_seq_data_start = (u8*)((uintptr_t)block + (uintptr_t)block->DataStart);
-    m_seq_ptr = m_seq_data_start;
-    m_tempo = block->Tempo;
-    m_ppq = block->PPQ;
-    m_chanvol.fill(0x7f);
-    m_chanpan.fill(0);
-  };
+               u32 bank);
 
+  midi_handler(MIDIBlockHeader* block,
+               voice_manager& vm,
+               MIDISound& sound,
+               s32 vol,
+               s32 pan,
+               locator& loc,
+               u32 bank,
+               std::optional<ame_handler*> parent);
+
+  void init_midi();
   void start();
   bool tick() override;
   void mute_channel(u8 channel);

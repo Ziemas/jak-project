@@ -12,13 +12,11 @@ std::unique_ptr<sound_handler> SFXBlock::make_handler(voice_manager& vm,
   auto& SFX = sounds[sound_id];
 
   if (SFX.grains.empty()) {
-
-    //fmt::print("skipping empty sfx\n");
+    // fmt::print("skipping empty sfx\n");
     return nullptr;
   }
 
-  handler = std::make_unique<blocksound_handler>(sounds[sound_id], vm, (SFX.d.Vol * vol) >> 10,
-                                                 pan, bank_id);
+  handler = std::make_unique<blocksound_handler>(sounds[sound_id], vm, vol, pan, bank_id);
   handler->init();
   return handler;
 }
