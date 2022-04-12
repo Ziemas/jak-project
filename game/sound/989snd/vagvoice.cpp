@@ -223,11 +223,6 @@ vol_pair voice_manager::make_volume(int vol1, int pan1, int vol2, int pan2, int 
   } else {
     rvol = (m_pan_table[total_pan - 180].left * vol) / 0x3fff;
     lvol = (m_pan_table[total_pan - 180].right * vol) / 0x3fff;
-    if (rvol < lvol) {
-      rvol = -rvol;
-    } else {
-      lvol = -lvol;
-    }
   }
 
   // TODO rest of this function
@@ -289,11 +284,6 @@ vol_pair voice_manager::make_volume_b(int sound_vol,
   } else {
     rvol = (m_pan_table[total_pan - 180].left * vol) / 0x3fff;
     lvol = (m_pan_table[total_pan - 180].right * vol) / 0x3fff;
-    if (rvol < lvol) {
-      rvol = -rvol;
-    } else {
-      lvol = -lvol;
-    }
   }
 
   // TODO rest of this function
