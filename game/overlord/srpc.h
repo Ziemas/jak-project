@@ -5,6 +5,8 @@
 
 void srpc_init_globals();
 
+extern const char* gLanguage;
+
 constexpr int MUSIC_TWEAK_COUNT = 32;
 
 struct MusicTweaks {
