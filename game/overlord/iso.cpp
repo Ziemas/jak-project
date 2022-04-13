@@ -44,6 +44,7 @@ VagDir gVagDir;
 u32 gPlayPos;
 static RPC_Dgo_Cmd sRPCBuff[1];  // todo move...
 DgoCommand scmd;
+static VagCommand vag_cmd;
 
 void iso_init_globals() {
   isofs = nullptr;
@@ -391,6 +392,18 @@ u32 ISOThread() {
 
         } break;
         case QUEUE_VAG_STREAM: {
+        } break;
+        case PLAY_VAG_STREAM: {
+        } break;
+        case STOP_VAG_STREAM: {
+        } break;
+        case PAUSE_VAG_STREAM: {
+        } break;
+        case CONTINUE_VAG_STREAM: {
+        } break;
+        case SET_VAG_VOLUME: {
+        } break;
+        case SET_DIALOG_VOLUME: {
         } break;
         default:
           printf("[OVERLORD] Unknown ISOThread message id 0x%x\n", msg_from_mbx->cmd_id);
