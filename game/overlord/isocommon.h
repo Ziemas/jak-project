@@ -32,6 +32,13 @@ constexpr int LOAD_TO_EE_OFFSET_CMD_ID = 0x102;  // command to load file to ee w
 constexpr int LOAD_DGO_CMD_ID = 0x200;           // command to load DGO
 constexpr int LOAD_SOUND_BANK = 0x300;           // Command to load a sound bank
 constexpr int LOAD_MUSIC = 0x380;                // Command to load music
+constexpr int QUEUE_VAG_STREAM = 0x400;          // Command to load a vag stream
+constexpr int PLAY_VAG_STREAM = 0x401;           // Command to play a vag stream
+constexpr int STOP_VAG_STREAM = 0x402;           // Command to stop a vag stream
+constexpr int PAUSE_VAG_STREAM = 0x403;          // Command to pause a vag stream
+constexpr int CONTINUE_VAG_STREAM = 0x404;       // Command to continue a vag stream
+constexpr int SET_VAG_VOLUME = 0x405;            // Command to set the volume of vag playback
+constexpr int SET_DIALOG_VOLUME = 0x406;         // Command to set the volume of vag playback
 
 constexpr int MAX_ISO_FILES = 350;  // maximum files on FS
 constexpr int MAX_OPEN_FILES = 16;  // maximum number of open files at a time.
