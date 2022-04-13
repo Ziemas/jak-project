@@ -149,11 +149,6 @@ void blocksound_handler::do_grain() {
     int options = grain.GrainParams.control.param[0];
     int count = grain.GrainParams.control.param[1];
     int previous = grain.GrainParams.control.param[2];
-    fmt::print("rnd play options: {} count: {} prev: {} gc: {}\n", options, count, previous,
-               m_sfx.grains.size());
-    for (int i = 0; i < m_sfx.grains.size(); i++) {
-      fmt::print(" type {} delay {}\n", m_sfx.grains[i].Type, m_sfx.grains[i].Delay);
-    }
 
     int rnd = rand() % options;
     if (rnd == previous) {
@@ -168,7 +163,6 @@ void blocksound_handler::do_grain() {
     m_grains_to_play = count + 1;
     m_grains_to_skip = (options - 1 - rnd) * count;
     m_skip_grains = true;
-    fmt::print("playing grain {} skipping {}\n", m_next_grain, m_grains_to_skip);
   } else {
     fmt::print("{}: Ignoring grain {}, type {}\n", (void*)this, m_next_grain, grain.Type);
   }
@@ -176,7 +170,6 @@ void blocksound_handler::do_grain() {
   if (m_skip_grains) {
     m_grains_to_play--;
     if (m_grains_to_play == 0) {
-      fmt::print("skipping from {} to {}\n", m_next_grain, m_next_grain + m_grains_to_skip);
       m_next_grain += m_grains_to_skip;
       m_skip_grains = false;
     }
