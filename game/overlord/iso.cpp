@@ -28,7 +28,6 @@ u32 CopyDataToEE(IsoMessage* _cmd, IsoBufferHeader* buffer_header);
 u32 CopyDataToIOP(IsoMessage* _cmd, IsoBufferHeader* buffer_header);
 u32 NullCallback(IsoMessage* _cmd, IsoBufferHeader* buffer_header);
 
-constexpr int VAGDIR_SIZE = 0x28b4;
 constexpr int LOADING_SCREEN_SIZE = 0x800000;
 constexpr u32 LOADING_SCREEN_DEST_ADDR = 0x1000000;
 
@@ -41,7 +40,7 @@ s32 iso_thread;
 s32 dgo_thread;
 s32 str_thread;
 s32 play_thread;
-u8 gVagDir[VAGDIR_SIZE];
+VagDir gVagDir;
 u32 gPlayPos;
 static RPC_Dgo_Cmd sRPCBuff[1];  // todo move...
 DgoCommand scmd;
@@ -56,7 +55,7 @@ void iso_init_globals() {
   dgo_thread = 0;
   str_thread = 0;
   play_thread = 0;
-  memset(gVagDir, 0, sizeof(gVagDir));
+  memset(&gVagDir, 0, sizeof(gVagDir));
   gPlayPos = 0;
   memset(sRPCBuff, 0, sizeof(sRPCBuff));
   memset(&scmd, 0, sizeof(DgoCommand));
@@ -205,7 +204,7 @@ u32 InitISOFS(const char* fs_mode, const char* loading_screen) {
   // LOAD VAGDIR file
   FileRecord* vagdir_file = FindISOFile("VAGDIR.AYB");
   if (vagdir_file) {
-    LoadISOFileToIOP(vagdir_file, gVagDir, VAGDIR_SIZE);
+    LoadISOFileToIOP(vagdir_file, &gVagDir, sizeof(gVagDir));
   }
   FileRecord* loading_screen_file = FindISOFile(loading_screen);
   if (loading_screen_file) {
@@ -230,29 +229,15 @@ u32 GetISOFileLength(FileRecord* f) {
   return isofs->get_length(f);
 }
 
-struct VagDirEntry {
-  union {
-    char name[8];
-    s32 name_as_s32s[2];
-  };
-
-  u32 unknown;
-};
-static_assert(sizeof(VagDirEntry) == 12, "bad size of VagDirEntry");
-
 /*!
  * Find VAG file by "name", where name is 8 bytes (chars with spaces at the end, treated as two
  * s32's). Returns pointer to name in the VAGDIR file data.
  */
 VagDirEntry* FindVAGFile(s32* name) {
-  // First 4 bytes of VAGDIR file are the number of entries.
-  // Next is a list of entries.
-  VagDirEntry* entry = (VagDirEntry*)(gVagDir + 4);
-
-  // loop over entries
-  for (s32 idx = 0; idx < *(s32*)gVagDir; idx++) {
+  VagDirEntry* entry = gVagDir.vag;
+  for (s32 idx = 0; idx < gVagDir.count; idx++) {
     // check if matching name
-    if (entry->name_as_s32s[0] == name[0] && entry->name_as_s32s[1] == name[1]) {
+    if (memcmp(entry->name, name, 8) == 0) {
       return entry;
     }
     entry++;
