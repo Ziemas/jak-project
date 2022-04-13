@@ -9,6 +9,17 @@
 #include "common/common_types.h"
 #include "isocommon.h"
 
+struct VagDirEntry {
+  char name[8];
+  u32 offset;
+};
+
+static constexpr int VAG_COUNT = 868;
+struct VagDir {
+  u32 count;
+  VagDirEntry vag[VAG_COUNT];
+};
+
 void iso_init_globals();
 FileRecord* FindISOFile(const char* name);
 u32 GetISOFileLength(FileRecord* f);
