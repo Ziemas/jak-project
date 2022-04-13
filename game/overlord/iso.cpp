@@ -234,7 +234,7 @@ u32 GetISOFileLength(FileRecord* f) {
  * Find VAG file by "name", where name is 8 bytes (chars with spaces at the end, treated as two
  * s32's). Returns pointer to name in the VAGDIR file data.
  */
-VagDirEntry* FindVAGFile(s32* name) {
+VagDirEntry* FindVAGFile(const char* name) {
   VagDirEntry* entry = gVagDir.vag;
   for (s32 idx = 0; idx < gVagDir.count; idx++) {
     // check if matching name
