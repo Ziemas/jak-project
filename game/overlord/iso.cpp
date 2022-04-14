@@ -778,14 +778,15 @@ u32 NullCallback(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
  * Initialize a VagCommand.
  */
 void InitVAGCmd(VagCommand* cmd, u32 x) {
-  cmd->field_0x30 = 0;
-  cmd->field_0x34 = 0;
   cmd->field_0x38 = 0;
-  cmd->field_0x3c = x;
+  cmd->field_0x3c = 0;
   cmd->field_0x40 = 0;
-  cmd->field_0x44 = 0;
-  cmd->field_0x48 = 0xffffffff;
-  gPlayPos = 0x30;
+  cmd->field_0x44 = x;
+  cmd->field_0x48 = 0;
+  cmd->field_0x4c = 0;
+  cmd->unk1 = -1;
+  cmd->unk2 = 0;
+  gPlayPos = 48;
   cmd->messagebox_to_reply = 0;
   cmd->thread_id = 0;
 }

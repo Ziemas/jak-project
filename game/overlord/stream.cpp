@@ -199,11 +199,11 @@ void* RPC_PLAY([[maybe_unused]] unsigned int fno, void* _cmd, int size) {
     }
 
     if (cmd->result == 0) {
-      // PlayVAGStream(file, vag, cmd->address, 1, 24, 1, 0);
+      PlayVAGStream(file, vag, cmd->address, 0x400, 1, nullptr);
     } else if (cmd->result == 1) {
-      // StopVAGStream(vag, 1);
+      StopVAGStream(vag, 1);
     } else {
-      // QueueVAGStream(file, vag, 0, 1);
+      QueueVAGStream(file, vag, 0, 1);
     }
 
     n_messages--;

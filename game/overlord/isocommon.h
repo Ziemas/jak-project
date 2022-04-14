@@ -12,6 +12,7 @@
 #include "common/common_types.h"
 #include "common/link_types.h"
 #include "game/common/overlord_common.h"
+#include "game/overlord/ssound.h"
 
 constexpr int PRI_STACK_LENGTH = 4;  // number of queued commands per priority
 constexpr int N_PRIORITIES = 4;      // number of priorities
@@ -111,19 +112,26 @@ struct IsoCommandLoadSingle : public IsoMessage {
   s32 bytes_done;           // 0x40
 };
 
+struct VagDirEntry;
 /*!
  * Command to do something.
  */
 struct VagCommand : public IsoMessage {
-  u32 field_0x30;
-  u32 field_0x34;
+  FileRecord *file;
+  VagDirEntry *vag;
   u32 field_0x38;
   u32 field_0x3c;
   u32 field_0x40;
   u32 field_0x44;
   u32 field_0x48;
   u32 field_0x4c;
-  // 0x6c max
+  u32 unk1;
+  u32 unk2;
+  u32 volume;
+  u32 sound_id;
+  u32 unk5;
+  u32 positioned;
+  Vec3w trans;
 };
 
 struct SoundBank;

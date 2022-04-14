@@ -13,3 +13,6 @@ IsoMessage* GetMessage();
 void ProcessMessageData();
 void ReturnMessage(IsoMessage* cmd);
 IsoBufferHeader* TryAllocateBuffer(uint32_t size);
+
+VagCommand* GetVAGCommand();
+void FreeVAGCommand(VagCommand* cmd);
