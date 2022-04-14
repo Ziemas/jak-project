@@ -35,9 +35,6 @@ VagCommand vag_cmds[N_VAG_CMDS];
 
 static s32 sSema;
 
-void ReleaseMessage(IsoMessage* cmd);
-void FreeVAGCommand(VagCommand* cmd);
-
 void iso_queue_init_globals() {
   memset(sBuffer, 0, sizeof(sBuffer));
   memset(sStrBuffer, 0, sizeof(sStrBuffer));
@@ -366,8 +363,8 @@ VagCommand* GetVAGCommand() {
 void FreeVAGCommand(VagCommand* cmd) {
   s32 idx = cmd - vag_cmds;
   if (idx >= 0 && idx < N_VAG_CMDS && ((vag_cmd_used >> (idx & 0x1f)) & 1)) {
-    while (WaitSema(sSema)) {
-    }
+    //while (WaitSema(sSema)) {
+    //}
 
     vag_cmd_used &= ~(1 << (idx & 0x1f));
     vag_cmd_cnt--;

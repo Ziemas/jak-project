@@ -134,3 +134,7 @@ s32 snd_BankLoadEx(const char* filename, s32 offset, s32, s32) {
   std::filesystem::path path = filename;
   return player->load_bank(path, offset);
 }
+
+s32 snd_GetVoiceStatus(s32 voice) {
+  return 0;
+}

@@ -58,6 +58,10 @@ static VagCommand vag_cmd;
 VagCommand* gVAGCMD = nullptr;
 s32 gDialogVolume = 0;
 s32 gFakeVAGClockPaused = 0;
+s32 gFakeVAGClockRunning = 0;
+s32 gFakeVAGClock = 0;
+s32 gRealVAGClockRunning = 0;
+s32 gRealVAGClock = 0;
 
 void iso_init_globals() {
   isofs = nullptr;
@@ -904,6 +908,9 @@ u32 bswap(u32 in) {
   return ((in >> 0x18) & 0xff) | ((in >> 8) & 0xff00) | ((in & 0xff00) << 8) | (in << 0x18);
 }
 
+// Instead of bothering with SRAMMalloc and such, just keep a buffer here
+static u8 sample_data[0xC030] = {};
+
 static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
   (void)_cmd;
   (void)buffer_header;
@@ -916,7 +923,6 @@ static s32 CheckVAGStreamProgress(VagCommand* vag) {
 }
 
 static void StopVAG(VagCommand* vag) {}
-
 static void PauseVAG(VagCommand* vag) {}
 static void CalculateVAGVolumes(s32 volume, s32 positioned, Vec3w* trans, VolumePair* out) {}
 static void UnpauseVAG(VagCommand* vag) {}
@@ -1084,8 +1090,17 @@ void CancelDGO(RPC_Dgo_Cmd* cmd) {
   }
 }
 
-// TODO - GetVAGStreamPos
-// TODO - VAG_MarkLoopStart
-// TODO - VAG_MarkLoopEnd
-// TODO - VAG_MarkNonloopStart
-// TODO - VAG_MarkNonloopEnd
+s32 GetVAGStreamPos() {
+  UpdatePlayPos();
+  if (gFakeVAGClockRunning) {
+    return gFakeVAGClock;
+  }
+  if (gRealVAGClockRunning) {
+    return gRealVAGClock;
+  }
+  return -1;
+}
+void VAG_MarkLoopStart() {}
+void VAG_MarkLoopEnd() {}
+void VAG_MarkNonloopStart() {}
+void VAG_MarkNonloopEnd() {}

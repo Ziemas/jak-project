@@ -9,6 +9,11 @@
 #include "common/common_types.h"
 #include "isocommon.h"
 
+extern s32 gFakeVAGClockPaused;
+extern s32 gFakeVAGClockRunning;
+extern s32 gFakeVAGClock;
+extern s32 gRealVAGClock;
+
 struct VagDirEntry {
   char name[8];
   u32 offset;
@@ -25,3 +30,4 @@ FileRecord* FindISOFile(const char* name);
 u32 GetISOFileLength(FileRecord* f);
 u32 InitISOFS(const char* fs_mode, const char* loading_screen);
 VagDirEntry* FindVAGFile(const char* name);
+s32 GetVAGStreamPos();

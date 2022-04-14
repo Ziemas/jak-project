@@ -12,6 +12,7 @@
 #include "common/util/Assert.h"
 #include "third-party/fmt/core.h"
 #include "iso.h"
+#include "ramdisk.h"
 
 using namespace iop;
 
@@ -26,6 +27,9 @@ static s32 gMusic;
 s32 gMusicTweak = 0x80;
 s32 gMusicPause = 0;
 u32 gFreeMem = 0;
+u32 gFrameNum = 0;
+
+static SoundIopInfo info;
 
 s32 gVAG_Id = 0;  // TODO probably doesn't belong here.
 
@@ -423,6 +427,8 @@ void* RPC_Loader(unsigned int /*fno*/, void* data, int size) {
   return nullptr;
 }
 
+static s32 dmaid = 0;
+
 s32 VBlank_Handler() {
   if (!gSoundEnable)
     return 1;
@@ -440,6 +446,52 @@ s32 VBlank_Handler() {
       gMusicFadeDir = 0;
     }
   }
+
+  if (!gInfoEE)
+    return 1;
+
+  gFrameNum++;
+
+  if (gFakeVAGClockRunning && !gFakeVAGClockPaused) {
+    gFakeVAGClock += 17;
+  }
+
+  // We don't need this, our DMA's are instant
+  // if (dmaid) {
+  //  if (sceSifDmaStat(dmaid) >= 0) {
+  //    return 1;
+  //  }
+  //  dmaid = 0;
+  //}
+
+  info.frame = gFrameNum;
+  info.strpos = GetVAGStreamPos();
+  info.std_id = gVAG_Id;
+  info.freemem = gFreeMem;
+  info.freemem2 = gMemFreeAtStart;
+  // info.nocd = gNoCD;
+  // info.dirtycd = gDirtyCD;
+  info.nocd = 0;
+  info.dirtycd = 0;
+  // info.diskspeed[0] = gDiskSpeed[0];
+  // info.diskspeed[1] = gDiskSpeed[1];
+  // info.lastspeed = gLastSpeed;
+  // info.dupseg = gDupSeg;
+
+  for (int i = 0; i < 48; i++) {
+    if (snd_GetVoiceStatus(i) == 1) {
+      info.chinfo[i] = -1;
+    } else {
+      info.chinfo[i] = 0;
+    }
+  }
+
+  sceSifDmaData dma;
+  dma.data = &info;
+  dma.addr = (void*)gInfoEE;
+  dma.size = 0x110;
+  dma.mode = 0;
+  dmaid = sceSifSetDma(&dma, 1);
 
   return 1;
 }

@@ -41,5 +41,6 @@ void snd_ContinueSound(s32);
 void snd_AutoPitch(s32, s32, s32, s32);
 void snd_AutoPitchBend(s32, s32, s32, s32);
 s32 snd_BankLoadEx(const char* filepath, s32 data_offset, s32 unk1, s32 unk2);
+s32 snd_GetVoiceStatus(s32 voice);
 
 #endif  // SNDSHIM_H_
