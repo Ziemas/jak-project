@@ -342,8 +342,9 @@ VagCommand* GetVAGCommand() {
     }
 
     // wait for VAG semaphore
-    while (WaitSema(sSema)) {
-    }
+    //while (WaitSema(sSema)) {
+    //}
+
     // try to get something.
     for (s32 i = 0; i < N_VAG_CMDS; i++) {
       if (!((vag_cmd_used >> (i & 0x1f)) & 1)) {
@@ -353,12 +354,12 @@ VagCommand* GetVAGCommand() {
         if (vag_cmd_cnt > max_vag_cmd_cnt) {
           max_vag_cmd_cnt = vag_cmd_cnt;
         }
-        SignalSema(sSema);
+        //SignalSema(sSema);
         return &vag_cmds[i];
       }
     }
 
-    SignalSema(sSema);
+    //SignalSema(sSema);
   }
 }
 
@@ -370,7 +371,7 @@ void FreeVAGCommand(VagCommand* cmd) {
 
     vag_cmd_used &= ~(1 << (idx & 0x1f));
     vag_cmd_cnt--;
-    SignalSema(sSema);
+    //SignalSema(sSema);
   } else {
     printf("[OVERLORD] Invalid FreeVAGCommand!\n");
   }
