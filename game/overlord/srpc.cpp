@@ -11,6 +11,7 @@
 #include "iso_api.h"
 #include "common/util/Assert.h"
 #include "third-party/fmt/core.h"
+#include "iso.h"
 
 using namespace iop;
 
@@ -75,7 +76,7 @@ u32 Thread_Loader() {
 
 void* RPC_Player(unsigned int /*fno*/, void* data, int size) {
   if (gSoundEnable) {
-    //VBlank_Handler();
+    // VBlank_Handler();
 
     gFreeMem = QueryTotalFreeMemSize();
     // if (!PollSema(gSema)) {
@@ -127,8 +128,7 @@ void* RPC_Player(unsigned int /*fno*/, void* data, int size) {
               }
             }
 
-            // TODO vagfile = FindVAGFile(namebuf);
-            void* vagfile = nullptr;
+            auto vagfile = FindVAGFile(namebuf);
 
             memcpy(namebuf, "VAGWAD  ", 8);
             strcpy(&namebuf[8], gLanguage);
@@ -136,10 +136,10 @@ void* RPC_Player(unsigned int /*fno*/, void* data, int size) {
             FileRecord* rec = isofs->find_in(namebuf);
             if (vagfile != nullptr) {
               if (cmd->play.parms.pitch_mod) {  // ??? TODO Verify what is being checked here
-                // PlayVagStream(rec, vagfile, cmd->play.sound_id, cmd->play.parms.volume, 0,
-                // cmd->play.parms.trans);
+                PlayVAGStream(rec, vagfile, cmd->play.sound_id, cmd->play.parms.volume, 0,
+                              &cmd->play.parms.trans);
               } else {
-                // PlayVagStream(rec, vagfile, cmd->play.sound_id, cmd->play.parms.volume, 0, 0);
+                PlayVAGStream(rec, vagfile, cmd->play.sound_id, cmd->play.parms.volume, 0, nullptr);
               }
             }
             break;
@@ -203,7 +203,7 @@ void* RPC_Player(unsigned int /*fno*/, void* data, int size) {
           if (sound != nullptr) {
             snd_PauseSound(sound->sound_handle);
           } else if (cmd->sound_id.sound_id == gVAG_Id) {
-            // TODO PauseVAGStream();
+            PauseVAGStream();
           }
         } break;
         case SoundCommand::STOP_SOUND: {
@@ -211,7 +211,7 @@ void* RPC_Player(unsigned int /*fno*/, void* data, int size) {
           if (sound != nullptr) {
             snd_StopSound(sound->sound_handle);
           } else if (cmd->sound_id.sound_id == gVAG_Id) {
-            // TODO StopVAGStream();
+            StopVAGStream(nullptr, 0);
           }
         } break;
         case SoundCommand::CONTINUE_SOUND: {
@@ -219,7 +219,7 @@ void* RPC_Player(unsigned int /*fno*/, void* data, int size) {
           if (sound != nullptr) {
             snd_ContinueSound(sound->sound_handle);
           } else if (cmd->sound_id.sound_id == gVAG_Id) {
-            // TODO UNpauseVAGStream();
+            UnpauseVAGStream();
           }
         } break;
         case SoundCommand::SET_PARAM: {
@@ -260,7 +260,7 @@ void* RPC_Player(unsigned int /*fno*/, void* data, int size) {
             }
 
           } else if (cmd->sound_id.sound_id == gVAG_Id) {
-            // TODO SetVAGStreamVolume();
+            SetVAGStreamVolume(cmd->param.parms.volume);
           }
         } break;
         case SoundCommand::SET_MASTER_VOLUME: {
@@ -270,7 +270,7 @@ void* RPC_Player(unsigned int /*fno*/, void* data, int size) {
               if (i == 1) {
                 gMusicVol = cmd->master_volume.volume;
               } else if (i == 2) {
-                // TODO SetDialogVolume(cmd->master_volume.volume);
+                SetDialogVolume(cmd->master_volume.volume);
               } else {
                 snd_SetMasterVolume(i, cmd->master_volume.volume);
               }
@@ -280,7 +280,7 @@ void* RPC_Player(unsigned int /*fno*/, void* data, int size) {
         case SoundCommand::PAUSE_GROUP: {
           snd_PauseAllSoundsInGroup(cmd->group.group);
           if ((cmd->group.group & 4) != 0) {
-            // TODO PauseVAGStream(0,0);
+            PauseVAGStream();
           }
           if (cmd->group.group & 2) {
             gMusicPause = 1;
@@ -290,13 +290,13 @@ void* RPC_Player(unsigned int /*fno*/, void* data, int size) {
           u8 group = cmd->group.group;
           KillSoundsInGroup(group);
           if ((group & 4) != 0) {
-            // TODO StopVAGStream(0,0);
+            StopVAGStream(nullptr, 0);
           }
         } break;
         case SoundCommand::CONTINUE_GROUP: {
           snd_ContinueAllSoundsInGroup(cmd->group.group);
           if (cmd->group.group & 4) {
-            //   UnpauseVAGStream();
+            UnpauseVAGStream();
           }
 
           if (cmd->group.group & 2) {
