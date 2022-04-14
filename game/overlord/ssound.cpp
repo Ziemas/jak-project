@@ -20,7 +20,6 @@ s32 gMusicFade = 0;
 s32 gMusicFadeDir = 0;
 
 u32 gVoice;
-u32 gStreamSRAM;
 s32 gSema;
 
 static u32 sLastTick;
@@ -90,7 +89,9 @@ void InitSound_Overlord() {
   gVoice = voice / 24 + ((voice % 24) * 2);
 
   // Allocate SPU RAM for our streams.
-  gStreamSRAM = snd_SRAMMalloc(0xc030);
+  // (Which we don't need on PC)
+  // gStreamSRAM = snd_SRAMMalloc(0xc030);
+  // gTrapSRAM = gStreamSRAM + 0xC000;
 
   snd_SetMixerMode(0, 0);
 
