@@ -6,6 +6,7 @@
 void srpc_init_globals();
 
 extern const char* gLanguage;
+extern s32 gVAG_Id;
 
 constexpr int MUSIC_TWEAK_COUNT = 32;
 

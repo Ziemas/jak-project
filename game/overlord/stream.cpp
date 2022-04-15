@@ -186,7 +186,7 @@ void* RPC_PLAY([[maybe_unused]] unsigned int fno, void* _cmd, int size) {
     }
 
     auto vag = FindVAGFile(namebuf);
-    memcpy(namebuf, "VAGVAG  ", 8);
+    memcpy(namebuf, "VAGWAD  ", 8);
     strcpy(&namebuf[8], gLanguage);
 
     FileRecord* file = nullptr;
@@ -197,6 +197,8 @@ void* RPC_PLAY([[maybe_unused]] unsigned int fno, void* _cmd, int size) {
       file = isofs->find_in(namebuf);
       namebuf[0] += 3;
     }
+
+    file = isofs->find_in(namebuf);
 
     if (cmd->result == 0) {
       PlayVAGStream(file, vag, cmd->address, 0x400, 1, nullptr);
