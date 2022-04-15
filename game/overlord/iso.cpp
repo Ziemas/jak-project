@@ -974,7 +974,7 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
   if (vag->buffer_number == 0) {
     // first buffer, set stuff up
     u32* data = (u32*)buffer_header->data;
-    if (data[0] != 0x70474156 && data[0] != 0x56414770) {
+    if (data[0] != 0x70474156 /* 'pGAV' */ && data[0] != 0x56414770 /* 'VAGp' */) {
       vag->stop = true;
       buffer_header->data_size = 0;
       return -1;
@@ -982,7 +982,7 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
 
     vag->sample_rate = data[4];
     vag->data_left = data[3];
-    if (data[0] == 0x70474156) {
+    if (data[0] == 0x70474156 /* 'pGAV' */) {
       vag->sample_rate = bswap(vag->sample_rate);
       vag->data_left = bswap(vag->data_left);
     }
@@ -1020,7 +1020,7 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
     }
 
     memcpy(&sample_data[0x6000], buffer_header->data, buffer_header->data_size);
-    if (!vag->paused) {  // FIXME clearly wrong name
+    if (!vag->paused) {  // FIXME clearly wrong name  // Or maybe not?
       vag->paused = 1;
       UnpauseVAG(vag);
     }
