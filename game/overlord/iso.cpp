@@ -971,49 +971,6 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
     return -1;
   }
 
-  if (vag->buffer_number != 0) {
-    if (vag->buffer_number == 1) {
-      if (buffer_header->data_size < vag->data_left) {
-        VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
-        FlushDcache();
-      } else {
-        vag->unk1 = vag->data_left + 0x5FF0;
-      }
-      memcpy(&sample_data[0x6000], buffer_header->data, buffer_header->data_size);
-      if (!vag->paused) {  // FIXME clearly wrong name
-        vag->paused = 1;
-        UnpauseVAG(vag);
-      }
-      vag->ready_for_data = 0;
-      vag->data_left -= buffer_header->data_size;
-      buffer_header->data_size = 0;
-      gPlayPos = 48;
-      gPlaying = true;
-    } else {
-      if ((vag->buffer_number & 1) != 0) {
-        if (buffer_header->data_size < vag->data_left) {
-          VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
-          FlushDcache();
-        } else {
-          vag->unk1 = vag->data_left + 0x5FF0;
-        }
-        memcpy(&sample_data[0x6000], buffer_header->data, buffer_header->data_size);
-        // set loop address
-      } else {
-        if (buffer_header->data_size < vag->data_left) {
-          VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
-        } else {
-          vag->unk1 = vag->data_left - 16;
-        }
-        memcpy(sample_data, buffer_header->data, buffer_header->data_size);
-        // set loop address
-      }
-      vag->ready_for_data = 0;
-      vag->data_left -= buffer_header->data_size;
-      buffer_header->data_size = 0;
-    }
-  }
-
   if (vag->buffer_number == 0) {
     // first buffer, set stuff up
     u32* data = (u32*)buffer_header->data;
@@ -1029,12 +986,14 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
       vag->sample_rate = bswap(vag->sample_rate);
       vag->data_left = bswap(vag->data_left);
     }
+
     gSampleRate = vag->sample_rate;
     gLastVagHalf = false;
     vag->data_left += 48;
     if (buffer_header->data_size >= vag->data_left) {
       vag->unk1 = vag->data_left - 16;
     }
+
     memcpy(sample_data, buffer_header->data, buffer_header->data_size);
     // set left vol
     // set right vol
@@ -1048,6 +1007,55 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
     }
     // keyon
     vag->field_0x40 = 1;
+    vag->data_left -= buffer_header->data_size;
+    buffer_header->data_size = 0;
+  }
+
+  if (vag->buffer_number == 1) {
+    if (buffer_header->data_size < vag->data_left) {
+      VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
+      FlushDcache();
+    } else {
+      vag->unk1 = vag->data_left + 0x5FF0;
+    }
+
+    memcpy(&sample_data[0x6000], buffer_header->data, buffer_header->data_size);
+    if (!vag->paused) {  // FIXME clearly wrong name
+      vag->paused = 1;
+      UnpauseVAG(vag);
+    }
+
+    vag->ready_for_data = 0;
+    vag->data_left -= buffer_header->data_size;
+    buffer_header->data_size = 0;
+    gPlayPos = 48;
+    gPlaying = true;
+  }
+
+  if (vag->buffer_number > 1) {
+    if ((vag->buffer_number & 1) != 0) {
+      if (buffer_header->data_size < vag->data_left) {
+        VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
+        FlushDcache();
+      } else {
+        vag->unk1 = vag->data_left + 0x5FF0;
+      }
+
+      memcpy(&sample_data[0x6000], buffer_header->data, buffer_header->data_size);
+      // set loop address
+    } else {
+      if (buffer_header->data_size < vag->data_left) {
+        VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
+        FlushDcache();
+      } else {
+        vag->unk1 = vag->data_left - 16;
+      }
+
+      memcpy(sample_data, buffer_header->data, buffer_header->data_size);
+      // set loop address
+    }
+
+    vag->ready_for_data = 0;
     vag->data_left -= buffer_header->data_size;
     buffer_header->data_size = 0;
   }
