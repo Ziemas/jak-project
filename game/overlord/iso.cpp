@@ -947,7 +947,7 @@ static void InitVAGCmd(VagCommand* cmd, u32 x) {
   cmd->paused = x;
   cmd->sample_rate = 0;
   cmd->stop = 0;
-  cmd->unk1 = -1;
+  cmd->buffer_line = -1;
   cmd->unk2 = 0;
   gPlayPos = 48;
   cmd->messagebox_to_reply = 0;
@@ -991,7 +991,7 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
     gLastVagHalf = false;
     vag->data_left += 48;
     if (buffer_header->data_size >= vag->data_left) {
-      vag->unk1 = vag->data_left - 16;
+      vag->buffer_line = vag->data_left - 16;
     }
 
     memcpy(sample_data, buffer_header->data, buffer_header->data_size);
@@ -1002,7 +1002,7 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
     // ssa
     // adsr1 = 0xF
     // adsr2 = 0x1fc0
-    if (vag->unk1) {
+    if (vag->buffer_line) {
       // lsa = trapSRAM
     }
     // keyon
@@ -1016,7 +1016,7 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
       VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
       FlushDcache();
     } else {
-      vag->unk1 = vag->data_left + 0x5FF0;
+      vag->buffer_line = vag->data_left + 0x5FF0;
     }
 
     memcpy(&sample_data[0x6000], buffer_header->data, buffer_header->data_size);
@@ -1038,7 +1038,7 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
         VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
         FlushDcache();
       } else {
-        vag->unk1 = vag->data_left + 0x5FF0;
+        vag->buffer_line = vag->data_left + 0x5FF0;
       }
 
       memcpy(&sample_data[0x6000], buffer_header->data, buffer_header->data_size);
@@ -1048,7 +1048,7 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
         VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
         FlushDcache();
       } else {
-        vag->unk1 = vag->data_left - 16;
+        vag->buffer_line = vag->data_left - 16;
       }
 
       memcpy(sample_data, buffer_header->data, buffer_header->data_size);
@@ -1071,7 +1071,7 @@ static s32 CheckVAGStreamProgress(VagCommand* vag) {
   if (!vag->field_0x40) {
     return 1;
   }
-  if (vag->unk1 == -1) {
+  if (vag->buffer_line == -1) {
   }
 
   return 1;
