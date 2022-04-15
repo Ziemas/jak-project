@@ -7,6 +7,7 @@
 #include "common/log/log.h"
 #include <cstring>
 #include <cstdio>
+#include "game/overlord/srpc.h"
 #include "iso.h"
 #include "iso_cd.h"
 #include "iso_queue.h"
@@ -32,11 +33,11 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header);
 static s32 CheckVAGStreamProgress(VagCommand* vag);
 static void StopVAG(VagCommand* vag);
 static void PauseVAG(VagCommand* vag);
-static void CalculateVAGVolumes(s32 volume, s32 positioned, Vec3w* trans, VolumePair* out);
 static void UnpauseVAG(VagCommand* vag);
 static void SetVAGVol();
-static void GetPlayPos();
+static s32 GetPlayPos();
 static void UpdatePlayPos();
+static void VAG_MarkLoopEnd(void* data, u32 size);
 
 constexpr int LOADING_SCREEN_SIZE = 0x800000;
 constexpr u32 LOADING_SCREEN_DEST_ADDR = 0x1000000;
@@ -62,6 +63,10 @@ s32 gFakeVAGClockRunning = 0;
 s32 gFakeVAGClock = 0;
 s32 gRealVAGClockRunning = 0;
 s32 gRealVAGClock = 0;
+s32 gRealVAGClockS = 0;
+s32 gPlaying = 0;
+s32 gSampleRate = 0;
+bool gLastVagHalf = false;
 
 void iso_init_globals() {
   isofs = nullptr;
@@ -374,7 +379,7 @@ u32 ISOThread() {
         } break;
         case LOAD_SOUND_BANK: {
           // if there's an in progress vag command, try again.
-          if (in_progress_vag_command && !in_progress_vag_command->field_0x44) {
+          if (in_progress_vag_command && !in_progress_vag_command->paused) {
             SendMbx(iso_mbx, msg_from_mbx);
           }
 
@@ -392,7 +397,7 @@ u32 ISOThread() {
         } break;
         case LOAD_MUSIC: {
           // if there's an in progress vag command, try again.
-          if (in_progress_vag_command && !in_progress_vag_command->field_0x44) {
+          if (in_progress_vag_command && !in_progress_vag_command->paused) {
             SendMbx(iso_mbx, msg_from_mbx);
             break;
           }
@@ -412,7 +417,10 @@ u32 ISOThread() {
         } break;
         case QUEUE_VAG_STREAM: {
           auto* cmd = (VagCommand*)msg_from_mbx;
-          if (true) {  // FIXME
+          if (cmd->vag &&
+              (!in_progress_vag_command || in_progress_vag_command->vag != cmd->vag ||
+               in_progress_vag_command->file != cmd->file) &&
+              (!in_progress_vag_command || (!vag_paused && in_progress_vag_command->paused))) {
             if (in_progress_vag_command) {
               gVAGCMD = nullptr;
               StopVAG(in_progress_vag_command);
@@ -438,10 +446,12 @@ u32 ISOThread() {
         } break;
         case PLAY_VAG_STREAM: {
           auto* cmd = (VagCommand*)msg_from_mbx;
-          if (true) {  // FIXME
+          bool thing = true;
+          if (in_progress_vag_command && in_progress_vag_command->vag == cmd->vag &&
+              in_progress_vag_command->file == cmd->file) {
             in_progress_vag_command->volume = cmd->volume;
-            in_progress_vag_command->volume = cmd->volume;
-            if (in_progress_vag_command->field_0x44) {
+            in_progress_vag_command->sound_id = cmd->sound_id;
+            if (in_progress_vag_command->paused) {
               if (vag_paused) {
                 unk = 1;
               } else {
@@ -449,15 +459,58 @@ u32 ISOThread() {
               }
             }
           } else {
-            if (true) {
+            if (in_progress_vag_command && !!in_progress_vag_command->paused &&
+                cmd->unk5 < in_progress_vag_command->unk5) {
+              thing = false;
+            }
+            if (thing) {
+              if (in_progress_vag_command) {
+                gVAGCMD = nullptr;
+                StopVAG(in_progress_vag_command);
+                ReleaseMessage(in_progress_vag_command);
+              }
+            }
+            in_progress_vag_command = &vag_cmd;
+            memcpy(&vag_cmd, cmd, sizeof(vag_cmd));
+            if (vag_paused) {
+              InitVAGCmd(&vag_cmd, 1);
+              unk = 1;
+            } else {
+              InitVAGCmd(&vag_cmd, 0);
+            }
+            vag_cmd.messagebox_to_reply = 0;
+            vag_cmd.thread_id = 0;
+            if (QueueMessage(&vag_cmd, 3, "PlayVag")) {
+              if (vag_cmd.vag) {
+                vag_cmd.fd = isofs->open_wad(vag_cmd.file, vag_cmd.vag->offset);
+              } else {
+                vag_cmd.fd = nullptr;
+              }
+              vag_cmd.status = -1;
+              vag_cmd.callback_function = ProcessVAGData;
+              gVAGCMD = &vag_cmd;
+            } else {
+              in_progress_vag_command = nullptr;
             }
           }
-
+          if (thing) {
+            if (!in_progress_vag_command || in_progress_vag_command->fd) {
+              gRealVAGClock = 0;
+              gRealVAGClockS = 0;
+              gRealVAGClockRunning = true;
+            } else {
+              gFakeVAGClock = 0;
+              gFakeVAGClockRunning = 0;
+              gFakeVAGClockPaused = 0;
+            }
+            gVAG_Id = in_progress_vag_command->sound_id;
+          }
           ReturnMessage(cmd);
         } break;
         case STOP_VAG_STREAM: {
           auto* cmd = (VagCommand*)msg_from_mbx;
-          if (true) {  // FIXME
+          if (in_progress_vag_command && (!cmd->vag || in_progress_vag_command->vag == cmd->vag) &&
+              (cmd->unk5 >= in_progress_vag_command->unk5)) {
             gVAGCMD = nullptr;
             StopVAG(in_progress_vag_command);
             ReleaseMessage(cmd);
@@ -471,7 +524,7 @@ u32 ISOThread() {
           auto* cmd = (VagCommand*)msg_from_mbx;
           gFakeVAGClockPaused = 1;
           if (!vag_paused) {
-            if (!in_progress_vag_command || in_progress_vag_command->field_0x44) {
+            if (!in_progress_vag_command || in_progress_vag_command->paused) {
               unk = 0;
             } else {
               PauseVAG(in_progress_vag_command);
@@ -888,12 +941,12 @@ u32 NullCallback(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
  * Initialize a VagCommand.
  */
 static void InitVAGCmd(VagCommand* cmd, u32 x) {
-  cmd->field_0x38 = 0;
-  cmd->field_0x3c = 0;
+  cmd->buffer_number = 0;
+  cmd->data_left = 0;
   cmd->field_0x40 = 0;
-  cmd->field_0x44 = x;
-  cmd->field_0x48 = 0;
-  cmd->field_0x4c = 0;
+  cmd->paused = x;
+  cmd->sample_rate = 0;
+  cmd->stop = 0;
   cmd->unk1 = -1;
   cmd->unk2 = 0;
   gPlayPos = 48;
@@ -912,23 +965,209 @@ u32 bswap(u32 in) {
 static u8 sample_data[0xC030] = {};
 
 static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
-  (void)_cmd;
-  (void)buffer_header;
-  ASSERT(false);
-  return 0;
+  auto* vag = (VagCommand*)_cmd;
+  if (vag->stop) {
+    buffer_header->data_size = 0;
+    return -1;
+  }
+
+  if (vag->buffer_number != 0) {
+    if (vag->buffer_number == 1) {
+      if (buffer_header->data_size < vag->data_left) {
+        VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
+        FlushDcache();
+      } else {
+        vag->unk1 = vag->data_left + 0x5FF0;
+      }
+      memcpy(&sample_data[0x6000], buffer_header->data, buffer_header->data_size);
+      if (!vag->paused) {  // FIXME clearly wrong name
+        vag->paused = 1;
+        UnpauseVAG(vag);
+      }
+      vag->ready_for_data = 0;
+      vag->data_left -= buffer_header->data_size;
+      buffer_header->data_size = 0;
+      gPlayPos = 48;
+      gPlaying = true;
+    } else {
+      if ((vag->buffer_number & 1) != 0) {
+        if (buffer_header->data_size < vag->data_left) {
+          VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
+          FlushDcache();
+        } else {
+          vag->unk1 = vag->data_left + 0x5FF0;
+        }
+        memcpy(&sample_data[0x6000], buffer_header->data, buffer_header->data_size);
+        // set loop address
+      } else {
+        if (buffer_header->data_size < vag->data_left) {
+          VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
+        } else {
+          vag->unk1 = vag->data_left - 16;
+        }
+        memcpy(sample_data, buffer_header->data, buffer_header->data_size);
+        // set loop address
+      }
+      vag->ready_for_data = 0;
+      vag->data_left -= buffer_header->data_size;
+      buffer_header->data_size = 0;
+    }
+  }
+
+  if (vag->buffer_number == 0) {
+    // first buffer, set stuff up
+    u32* data = (u32*)buffer_header->data;
+    if (data[0] != 0x70474156 && data[0] != 0x56414770) {
+      vag->stop = true;
+      buffer_header->data_size = 0;
+      return -1;
+    }
+
+    vag->sample_rate = data[4];
+    vag->data_left = data[3];
+    if (data[0] == 0x70474156) {
+      vag->sample_rate = bswap(vag->sample_rate);
+      vag->data_left = bswap(vag->data_left);
+    }
+    gSampleRate = vag->sample_rate;
+    gLastVagHalf = false;
+    vag->data_left += 48;
+    if (buffer_header->data_size >= vag->data_left) {
+      vag->unk1 = vag->data_left - 16;
+    }
+    memcpy(sample_data, buffer_header->data, buffer_header->data_size);
+    // set left vol
+    // set right vol
+    // vmix
+    // pitch
+    // ssa
+    // adsr1 = 0xF
+    // adsr2 = 0x1fc0
+    if (vag->unk1) {
+      // lsa = trapSRAM
+    }
+    // keyon
+    vag->field_0x40 = 1;
+    vag->data_left -= buffer_header->data_size;
+    buffer_header->data_size = 0;
+  }
+
+  vag->buffer_number++;
+  return -1;
 }
 
 static s32 CheckVAGStreamProgress(VagCommand* vag) {
-  return 0;
+  if (vag->stop) {
+    return 0;
+  }
+  if (!vag->field_0x40) {
+    return 1;
+  }
+  if (vag->unk1 == -1) {
+  }
+
+  return 1;
 }
 
-static void StopVAG(VagCommand* vag) {}
-static void PauseVAG(VagCommand* vag) {}
-static void CalculateVAGVolumes(s32 volume, s32 positioned, Vec3w* trans, VolumePair* out) {}
-static void UnpauseVAG(VagCommand* vag) {}
-static void SetVAGVol() {}
-static void GetPlayPos() {}
-static void UpdatePlayPos() {}
+static void StopVAG(VagCommand* vag) {
+  gPlaying = false;
+  PauseVAG(vag);
+  // FIXME Key off the voice
+  gFakeVAGClockRunning = false;
+  gRealVAGClockRunning = false;
+  gVAG_Id = 1;
+}
+
+static void PauseVAG(VagCommand* vag) {
+  gFakeVAGClockPaused = true;
+  if (vag->paused) {
+    return;
+  }
+
+  vag->paused = true;
+  if (vag->field_0x40) {
+    // FIXME pitch and volume to 0
+  }
+}
+
+static void CalculateVAGVolumes(s32 volume, s32 positioned, Vec3w* trans, s32* left, s32* right) {
+  if (positioned) {
+    volume = CalculateFallofVolume(trans, (volume * gDialogVolume), 1, 10, 50);
+    auto* pan = &gPanTable[(630 - CalculateAngle(trans)) % 360];
+    *left = (pan->left * volume) >> 10;
+    *right = (pan->right * volume) >> 10;
+    if (*left >= 0x4000) {
+      *left = 0x3FFF;
+    }
+    if (*right >= 0x4000) {
+      *right = 0x3FFF;
+    }
+  } else {
+    volume = (volume * gDialogVolume) >> 6;
+    if (volume >= 0x4000) {
+      volume = 0x3FFF;
+    }
+
+    *left = volume;
+    *right = volume;
+  }
+}
+
+static void UnpauseVAG(VagCommand* vag) {
+  gFakeVAGClockPaused = false;
+  if (vag->paused) {
+    if (vag->field_0x40) {
+    }
+
+    vag->paused = false;
+  }
+}
+
+static void SetVAGVol() {
+  if (gVAGCMD && gVAGCMD->field_0x40 && !gVAGCMD->paused) {
+    s32 left = 0, right = 0;
+    CalculateVAGVolumes(gVAGCMD->volume, gVAGCMD->positioned, &gVAGCMD->trans, &left, &right);
+    // FIXME set volume
+  }
+}
+
+static s32 GetPlayPos() {
+  // This does the safe NAX read by reading NAX in a loop until it returns
+  // the same value 3 times in a row. We can skip this on pc.
+  u32 NAX = 0;  // FIXME nax read here
+  // We can also say our sample buffer always starts at 0 to simplify things.
+  if (NAX > 0xBFFF) {
+    return -1;
+  } else {
+    return NAX;
+  }
+}
+
+static void UpdatePlayPos() {
+  if (!gPlaying) {
+    return;
+  }
+
+  u32 pos = GetPlayPos();
+  if (pos == -1) {
+    if (gLastVagHalf) {
+      pos = 0xC000;
+    } else {
+      pos = 0x6000;
+    }
+  } else {
+    gLastVagHalf = pos >= 0x6000;
+  }
+
+  if (pos >= gPlayPos) {
+    gRealVAGClockS += pos - gPlayPos;
+  } else {
+    gRealVAGClockS += pos + 0xC000 - gPlayPos;
+  }
+
+  gRealVAGClock = 4 * (0x1C00 * (gRealVAGClockS >> 4) / gSampleRate);
+  gPlayPos = pos;
+}
 
 void* RPC_DGO(unsigned int fno, void* _cmd, int y);
 void LoadDGO(RPC_Dgo_Cmd* cmd);
@@ -1100,7 +1339,7 @@ s32 GetVAGStreamPos() {
   }
   return -1;
 }
-void VAG_MarkLoopStart() {}
-void VAG_MarkLoopEnd() {}
-void VAG_MarkNonloopStart() {}
-void VAG_MarkNonloopEnd() {}
+
+static void VAG_MarkLoopEnd(void* data, u32 size) {
+  ((u8*)data)[size - 15] = 3;
+}
