@@ -513,7 +513,7 @@ u32 ISOThread() {
               (cmd->unk5 >= in_progress_vag_command->unk5)) {
             gVAGCMD = nullptr;
             StopVAG(in_progress_vag_command);
-            ReleaseMessage(cmd);
+            ReleaseMessage(in_progress_vag_command);
             in_progress_vag_command = nullptr;
           }
           vag_paused = 0;
