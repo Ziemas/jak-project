@@ -1068,10 +1068,37 @@ static s32 CheckVAGStreamProgress(VagCommand* vag) {
   if (vag->stop) {
     return 0;
   }
+
   if (!vag->field_0x40) {
     return 1;
   }
+
   if (vag->buffer_line == -1) {
+    if (gPlayPos < 0x6000) {
+      if ((vag->buffer_number & 1) == 0) {
+        // set loop addr to trap
+      }
+
+    } else {
+      if ((vag->buffer_number & 1) == 1) {
+        // set loop addr to trap
+      }
+    }
+
+    return 1;
+  }
+
+  if ((gPlayPos & 0xFFFFFFF0) == vag->buffer_line) {
+    return 0;
+  }
+
+  if (((gPlayPos < 0x6000) && (vag->buffer_line < 0x6000)) ||
+      ((0x5fff < gPlayPos && (0x5fff < vag->buffer_line)))) {
+    if ((vag->unk2 == 0) && (gPlayPos < vag->buffer_line)) {
+      // seet loop addr gStreamSRAM + vag->unk1
+      vag->unk2 = 1;
+    }
+    return 1;
   }
 
   return 1;
