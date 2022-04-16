@@ -64,6 +64,10 @@
         (set! ret (-> *sound-iop-info* strpos))
         )
 
+
+    ;(format 0 "Current frame ~D ~%" (-> *sound-iop-info* frame))
+    ;(format 0 "Current str-pos ~D ~%" (-> *sound-iop-info* strpos))
+    ;(format 0 "Current str-id ~D ~%" (-> *sound-iop-info* str-id))
       ret
       )
   )

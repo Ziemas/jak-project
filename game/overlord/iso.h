@@ -13,6 +13,7 @@ extern s32 gFakeVAGClockPaused;
 extern s32 gFakeVAGClockRunning;
 extern s32 gFakeVAGClock;
 extern s32 gRealVAGClock;
+extern s32 gVoice;
 
 struct VagDirEntry {
   char name[8];

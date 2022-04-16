@@ -8,6 +8,7 @@
 #include <cstring>
 #include <cstdio>
 #include "game/overlord/srpc.h"
+#include "game/sound/sndshim.h"
 #include "iso.h"
 #include "iso_cd.h"
 #include "iso_queue.h"
@@ -18,6 +19,7 @@
 #include "fake_iso.h"
 #include "game/common/dgo_rpc_types.h"
 #include "common/util/Assert.h"
+#include "game/sound/sdshim.h"
 
 using namespace iop;
 
@@ -67,6 +69,7 @@ s32 gRealVAGClockS = 0;
 s32 gPlaying = 0;
 s32 gSampleRate = 0;
 bool gLastVagHalf = false;
+s32 gVoice;
 
 void iso_init_globals() {
   isofs = nullptr;
@@ -961,9 +964,6 @@ u32 bswap(u32 in) {
   return ((in >> 0x18) & 0xff) | ((in >> 8) & 0xff00) | ((in & 0xff00) << 8) | (in << 0x18);
 }
 
-// Instead of bothering with SRAMMalloc and such, just keep a buffer here
-static u8 sample_data[0xC030] = {};
-
 static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
   auto* vag = (VagCommand*)_cmd;
   if (vag->stop) {
@@ -994,18 +994,23 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
       vag->buffer_line = vag->data_left - 16;
     }
 
-    memcpy(sample_data, buffer_header->data, buffer_header->data_size);
-    // set left vol
-    // set right vol
-    // vmix
-    // pitch
-    // ssa
-    // adsr1 = 0xF
-    // adsr2 = 0x1fc0
-    if (vag->buffer_line) {
-      // lsa = trapSRAM
+    if (!DMA_SendToSPUAndSync(buffer_header->data, buffer_header->data_size, gStreamSRAM)) {
+      return -1;
     }
-    // keyon
+    sceSdSetParam(gVoice | SD_VP_VOLL, 0);
+    sceSdSetParam(gVoice | SD_VP_VOLR, 0);
+    u32 vmix = sceSdGetSwitch((gVoice & 1) | SD_S_VMIXL);
+    sceSdSetSwitch((gVoice & 1) | SD_S_VMIXL, vmix | (1 << (gVoice >> 1)));
+    vmix = sceSdGetSwitch((gVoice & 1) | SD_S_VMIXR);
+    sceSdSetSwitch((gVoice & 1) | SD_S_VMIXR, vmix | (1 << (gVoice >> 1)));
+    sceSdSetParam(gVoice | SD_VP_PITCH, 0);
+    sceSdSetAddr(gVoice | SD_VA_SSA, gStreamSRAM + 0x30);
+    sceSdSetParam(gVoice | SD_VP_ADSR1, 0xf);
+    sceSdSetParam(gVoice | SD_VP_ADSR2, 0x1fc0);
+    if (vag->buffer_line == -1) {
+      sceSdSetAddr(gVoice | SD_VA_LSAX, gTrapSRAM);
+    }
+    snd_keyOnVoiceRaw(gVoice & 1, gVoice >> 1);
     vag->field_0x40 = 1;
     vag->data_left -= buffer_header->data_size;
     buffer_header->data_size = 0;
@@ -1019,7 +1024,10 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
       vag->buffer_line = vag->data_left + 0x5FF0;
     }
 
-    memcpy(&sample_data[0x6000], buffer_header->data, buffer_header->data_size);
+    if (!DMA_SendToSPUAndSync(buffer_header->data, buffer_header->data_size,
+                              gStreamSRAM + 0x6000)) {
+      return -1;
+    }
     if (!vag->paused) {  // FIXME clearly wrong name  // Or maybe not?
       vag->paused = 1;
       UnpauseVAG(vag);
@@ -1041,8 +1049,11 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
         vag->buffer_line = vag->data_left + 0x5FF0;
       }
 
-      memcpy(&sample_data[0x6000], buffer_header->data, buffer_header->data_size);
-      // set loop address
+      if (!DMA_SendToSPUAndSync(buffer_header->data, buffer_header->data_size, gStreamSRAM)) {
+        return -1;
+      }
+
+      sceSdSetAddr(gVoice | SD_VA_LSAX, gStreamSRAM + 0x6000);
     } else {
       if (buffer_header->data_size < vag->data_left) {
         VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
@@ -1051,8 +1062,11 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
         vag->buffer_line = vag->data_left - 16;
       }
 
-      memcpy(sample_data, buffer_header->data, buffer_header->data_size);
-      // set loop address
+      if (!DMA_SendToSPUAndSync(buffer_header->data, buffer_header->data_size,
+                                gStreamSRAM + 0x6000)) {
+        return -1;
+      }
+      sceSdSetAddr(gVoice | SD_VA_LSAX, gStreamSRAM);
     }
 
     vag->ready_for_data = 0;
@@ -1076,12 +1090,12 @@ static s32 CheckVAGStreamProgress(VagCommand* vag) {
   if (vag->buffer_line == -1) {
     if (gPlayPos < 0x6000) {
       if ((vag->buffer_number & 1) == 0) {
-        // set loop addr to trap
+        sceSdSetAddr(gVoice | SD_VA_LSAX, gTrapSRAM);
       }
 
     } else {
       if ((vag->buffer_number & 1) == 1) {
-        // set loop addr to trap
+        sceSdSetAddr(gVoice | SD_VA_LSAX, gTrapSRAM);
       }
     }
 
@@ -1095,7 +1109,7 @@ static s32 CheckVAGStreamProgress(VagCommand* vag) {
   if (((gPlayPos < 0x6000) && (vag->buffer_line < 0x6000)) ||
       ((0x5fff < gPlayPos && (0x5fff < vag->buffer_line)))) {
     if ((vag->unk2 == 0) && (gPlayPos < vag->buffer_line)) {
-      // seet loop addr gStreamSRAM + vag->unk1
+      sceSdSetAddr(gVoice | SD_VA_LSAX, gStreamSRAM + vag->buffer_line);
       vag->unk2 = 1;
     }
     return 1;
@@ -1107,7 +1121,7 @@ static s32 CheckVAGStreamProgress(VagCommand* vag) {
 static void StopVAG(VagCommand* vag) {
   gPlaying = false;
   PauseVAG(vag);
-  // FIXME Key off the voice
+  snd_keyOffVoiceRaw(gVoice & 1, gVoice >> 1);
   gFakeVAGClockRunning = false;
   gRealVAGClockRunning = false;
   gVAG_Id = 1;
@@ -1121,7 +1135,9 @@ static void PauseVAG(VagCommand* vag) {
 
   vag->paused = true;
   if (vag->field_0x40) {
-    // FIXME pitch and volume to 0
+    sceSdSetParam(gVoice | SD_VP_VOLL, 0);
+    sceSdSetParam(gVoice | SD_VP_VOLR, 0);
+    sceSdSetParam(gVoice | SD_VP_PITCH, 0);
   }
 }
 
@@ -1152,6 +1168,11 @@ static void UnpauseVAG(VagCommand* vag) {
   gFakeVAGClockPaused = false;
   if (vag->paused) {
     if (vag->field_0x40) {
+      s32 left = 0, right = 0;
+      CalculateVAGVolumes(vag->volume, vag->positioned, &vag->trans, &left, &right);
+      sceSdSetParam(gVoice | SD_VP_VOLL, left);
+      sceSdSetParam(gVoice | SD_VP_VOLR, right);
+      sceSdSetParam(gVoice | SD_VP_PITCH, (vag->sample_rate < 0xc) / 48000);
     }
 
     vag->paused = false;
@@ -1162,14 +1183,15 @@ static void SetVAGVol() {
   if (gVAGCMD && gVAGCMD->field_0x40 && !gVAGCMD->paused) {
     s32 left = 0, right = 0;
     CalculateVAGVolumes(gVAGCMD->volume, gVAGCMD->positioned, &gVAGCMD->trans, &left, &right);
-    // FIXME set volume
+    sceSdSetParam(gVoice | SD_VP_VOLL, left);
+    sceSdSetParam(gVoice | SD_VP_VOLR, right);
   }
 }
 
 static s32 GetPlayPos() {
   // This does the safe NAX read by reading NAX in a loop until it returns
   // the same value 3 times in a row. We can skip this on pc.
-  u32 NAX = 0;  // FIXME nax read here
+  u32 NAX = sceSdGetAddr(gVoice | SD_VA_NAX);
   // We can also say our sample buffer always starts at 0 to simplify things.
   if (NAX > 0xBFFF) {
     return -1;
