@@ -12,6 +12,13 @@ void snd_StopSoundSystem() {
   player.reset();
 }
 
+// dma is always instant, allocation not required
+s32 snd_GetFreeSPUDMA() {
+  return 0;
+}
+
+void snd_FreeSPUDMA([[maybe_unused]] s32 channel) {}
+
 s32 snd_GetTick() {
   return player->get_tick();
 }
@@ -138,3 +145,7 @@ s32 snd_BankLoadEx(const char* filename, s32 offset, s32, s32) {
 s32 snd_GetVoiceStatus(s32 voice) {
   return 0;
 }
+
+void snd_keyOnVoiceRaw(u32 core, u32 voice) {}
+
+void snd_keyOffVoiceRaw(u32, u32) {}
