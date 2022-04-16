@@ -44,6 +44,19 @@ static void VAG_MarkLoopEnd(void* data, u32 size);
 constexpr int LOADING_SCREEN_SIZE = 0x800000;
 constexpr u32 LOADING_SCREEN_DEST_ADDR = 0x1000000;
 
+static constexpr s32 loop_end = 1;
+static constexpr s32 loop_repeat = 2;
+static constexpr s32 loop_start = 4;
+
+// Empty ADPCM block with loop flags
+// clang-format off
+static u8 VAG_SilentLoop[48] = {
+    0x0, loop_start | loop_repeat, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, loop_repeat,              0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, loop_end | loop_repeat,   0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+};
+// clang-format on
+
 IsoFs* isofs;
 u32 iso_init_flag;
 s32 sync_mbx;
@@ -144,10 +157,9 @@ u32 InitISOFS(const char* fs_mode, const char* loading_screen) {
   // mark us as NOT initialized.
   iso_init_flag = 1;
 
-  // TODO ADD
-  //  while(!DMA_SendToSPUAndSync(&VAG_SilentLoop, 0x30, gTrapSRAM)) {
-  //    DelayThread(1000);
-  //  }
+  while (!DMA_SendToSPUAndSync(&VAG_SilentLoop, 0x30, gTrapSRAM)) {
+    DelayThread(1000);
+  }
 
   // INITIALIZE MESSAGE BOXES
   MbxParam mbx_param;
