@@ -121,7 +121,7 @@ struct VagCommand : public IsoMessage {
   VagDirEntry *vag;
   u32 buffer_number;
   u32 data_left;
-  u32 field_0x40;
+  u32 started;
   u32 paused;
   u32 sample_rate;
   u32 stop;
@@ -129,7 +129,7 @@ struct VagCommand : public IsoMessage {
   u32 unk2;
   s32 volume;
   u32 sound_id;
-  u32 unk5;
+  u32 priority;
   u32 positioned;
   Vec3w trans;
 };

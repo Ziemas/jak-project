@@ -108,7 +108,7 @@ void LoadMusic(const char* music_name, s32* bank) {
   gMusicTweak = 0x80;
 }
 
-void QueueVAGStream(FileRecord* file, VagDirEntry* vag, u32 sound_id, u32 unk) {
+void QueueVAGStream(FileRecord* file, VagDirEntry* vag, u32 sound_id, u32 priority) {
   if (vag == nullptr) {
     return;
   }
@@ -120,7 +120,7 @@ void QueueVAGStream(FileRecord* file, VagDirEntry* vag, u32 sound_id, u32 unk) {
   cmd->file = file;
   cmd->vag = vag;
   cmd->sound_id = sound_id;
-  cmd->unk5 = unk;
+  cmd->priority = priority;
   cmd->positioned = 0;
 
   SendMbx(iso_mbx, cmd);
@@ -130,7 +130,7 @@ void PlayVAGStream(FileRecord* file,
                    VagDirEntry* vag,
                    u32 sound_id,
                    s32 volume,
-                   u32 unk,
+                   u32 priority,
                    Vec3w* trans) {
   auto cmd = GetVAGCommand();
   cmd->cmd_id = PLAY_VAG_STREAM;
@@ -140,7 +140,7 @@ void PlayVAGStream(FileRecord* file,
   cmd->vag = vag;
   cmd->sound_id = sound_id;
   cmd->volume = volume;
-  cmd->unk5 = unk;
+  cmd->priority = priority;
 
   if (trans) {
     cmd->trans = *trans;
@@ -170,13 +170,13 @@ void SetDialogVolume(s32 volume) {
   SendMbx(iso_mbx, cmd);
 }
 
-void StopVAGStream(VagDirEntry* vag, u32 unk) {
+void StopVAGStream(VagDirEntry* vag, u32 priority) {
   auto cmd = GetVAGCommand();
   cmd->cmd_id = STOP_VAG_STREAM;
   cmd->messagebox_to_reply = 0;
   cmd->thread_id = 0;
   cmd->vag = vag;
-  cmd->unk5 = unk;
+  cmd->priority = priority;
 
   SendMbx(iso_mbx, cmd);
 }
