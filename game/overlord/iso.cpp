@@ -475,7 +475,7 @@ u32 ISOThread() {
             }
           } else {
             if (in_progress_vag_command && !!in_progress_vag_command->paused &&
-                cmd->unk5 < in_progress_vag_command->unk5) {
+                cmd->priority < in_progress_vag_command->priority) {
               thing = false;
             }
             if (thing) {
@@ -525,7 +525,7 @@ u32 ISOThread() {
         case STOP_VAG_STREAM: {
           auto* cmd = (VagCommand*)msg_from_mbx;
           if (in_progress_vag_command && (!cmd->vag || in_progress_vag_command->vag == cmd->vag) &&
-              (cmd->unk5 >= in_progress_vag_command->unk5)) {
+              (cmd->priority >= in_progress_vag_command->priority)) {
             gVAGCMD = nullptr;
             StopVAG(in_progress_vag_command);
             ReleaseMessage(in_progress_vag_command);
@@ -958,7 +958,7 @@ u32 NullCallback(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
 static void InitVAGCmd(VagCommand* cmd, u32 x) {
   cmd->buffer_number = 0;
   cmd->data_left = 0;
-  cmd->field_0x40 = 0;
+  cmd->started = 0;
   cmd->paused = x;
   cmd->sample_rate = 0;
   cmd->stop = 0;
@@ -1009,6 +1009,7 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
     if (!DMA_SendToSPUAndSync(buffer_header->data, buffer_header->data_size, gStreamSRAM)) {
       return -1;
     }
+
     sceSdSetParam(gVoice | SD_VP_VOLL, 0);
     sceSdSetParam(gVoice | SD_VP_VOLR, 0);
     u32 vmix = sceSdGetSwitch((gVoice & 1) | SD_S_VMIXL);
@@ -1023,7 +1024,7 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
       sceSdSetAddr(gVoice | SD_VA_LSAX, gTrapSRAM);
     }
     snd_keyOnVoiceRaw(gVoice & 1, gVoice >> 1);
-    vag->field_0x40 = 1;
+    vag->started = 1;
     vag->data_left -= buffer_header->data_size;
     buffer_header->data_size = 0;
   }
@@ -1095,18 +1096,20 @@ static s32 CheckVAGStreamProgress(VagCommand* vag) {
     return 0;
   }
 
-  if (!vag->field_0x40) {
+  if (!vag->started) {
     return 1;
   }
 
   if (vag->buffer_line == -1) {
     if (gPlayPos < 0x6000) {
       if ((vag->buffer_number & 1) == 0) {
+        vag->ready_for_data = 1;
         sceSdSetAddr(gVoice | SD_VA_LSAX, gTrapSRAM);
       }
 
     } else {
       if ((vag->buffer_number & 1) == 1) {
+        vag->ready_for_data = 1;
         sceSdSetAddr(gVoice | SD_VA_LSAX, gTrapSRAM);
       }
     }
@@ -1146,7 +1149,7 @@ static void PauseVAG(VagCommand* vag) {
   }
 
   vag->paused = true;
-  if (vag->field_0x40) {
+  if (vag->started) {
     sceSdSetParam(gVoice | SD_VP_VOLL, 0);
     sceSdSetParam(gVoice | SD_VP_VOLR, 0);
     sceSdSetParam(gVoice | SD_VP_PITCH, 0);
@@ -1179,7 +1182,7 @@ static void CalculateVAGVolumes(s32 volume, s32 positioned, Vec3w* trans, s32* l
 static void UnpauseVAG(VagCommand* vag) {
   gFakeVAGClockPaused = false;
   if (vag->paused) {
-    if (vag->field_0x40) {
+    if (vag->started) {
       s32 left = 0, right = 0;
       CalculateVAGVolumes(vag->volume, vag->positioned, &vag->trans, &left, &right);
       sceSdSetParam(gVoice | SD_VP_VOLL, left);
@@ -1192,7 +1195,7 @@ static void UnpauseVAG(VagCommand* vag) {
 }
 
 static void SetVAGVol() {
-  if (gVAGCMD && gVAGCMD->field_0x40 && !gVAGCMD->paused) {
+  if (gVAGCMD && gVAGCMD->started && !gVAGCMD->paused) {
     s32 left = 0, right = 0;
     CalculateVAGVolumes(gVAGCMD->volume, gVAGCMD->positioned, &gVAGCMD->trans, &left, &right);
     sceSdSetParam(gVoice | SD_VP_VOLL, left);

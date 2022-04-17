@@ -38,6 +38,10 @@ class voice {
     m_Volume.right.Set(right);
   }
 
+  void set_volume_l(u16 vol) { m_Volume.left.Set(vol); }
+
+  void set_volume_r(u16 vol) { m_Volume.right.Set(vol); }
+
   s16 get_envx() { return m_ADSR.Level(); }
 
   void set_sample(u16* sample) { m_sample = sample; }

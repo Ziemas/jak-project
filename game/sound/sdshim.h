@@ -1,5 +1,6 @@
 #pragma once
 #include "common/common_types.h"
+#include "game/sound/common/voice.h"
 
 #define SD_VA_SSA ((0x20 << 8) + (0x01 << 6))
 #define SD_VA_LSAX ((0x21 << 8) + (0x01 << 6))
@@ -11,6 +12,8 @@
 #define SD_VP_ADSR1 (0x03 << 8)
 #define SD_VP_ADSR2 (0x04 << 8)
 #define SD_VA_NAX ((0x22 << 8) + (0x01 << 6))
+
+extern snd::voice voice;
 
 using sceSdTransIntrHandler = int (*)(int, void*);
 

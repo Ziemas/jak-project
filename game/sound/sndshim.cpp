@@ -1,5 +1,6 @@
 #include "sndshim.h"
 #include "989snd/player.h"
+#include "sdshim.h"
 #include <cstdio>
 
 std::unique_ptr<snd::player> player;
@@ -41,25 +42,17 @@ s32 snd_ExternVoiceVoiceAlloc(s32, s32) {
 }
 
 u32 snd_SRAMMalloc(u32) {
-  // printf("snd_SRAMMalloc\n");
+  // spu memory currently hardcoded
   return 0;
 }
 
-void snd_SetMixerMode(s32, s32) {
-  printf("snd_SetMixerMode\n");
-}
+void snd_SetMixerMode(s32, s32) {}
 
-void snd_SetGroupVoiceRange(s32, s32, s32) {
-  printf("snd_SetGroupVoiceRange\n");
-}
+void snd_SetGroupVoiceRange(s32, s32, s32) {}
 
-void snd_SetReverbDepth(s32, s32, s32) {
-  printf("snd_SetReverbDepth\n");
-}
+void snd_SetReverbDepth(s32, s32, s32) {}
 
-void snd_SetReverbType(s32, s32) {
-  printf("snd_SetReverbType\n");
-}
+void snd_SetReverbType(s32, s32) {}
 
 void snd_SetPanTable(s16* table) {
   player->set_pan_table((snd::vol_pair*)table);
@@ -130,9 +123,11 @@ void snd_ContinueSound(s32 sound_handle) {
 }
 
 void snd_AutoPitch(s32, s32, s32, s32) {
+  // TODO
   printf("snd_AutoPitch\n");
 }
 void snd_AutoPitchBend(s32, s32, s32, s32) {
+  // TODO
   printf("snd_AutoPitchBend\n");
 }
 
@@ -146,6 +141,10 @@ s32 snd_GetVoiceStatus(s32 voice) {
   return 0;
 }
 
-void snd_keyOnVoiceRaw(u32 core, u32 voice) {}
+void snd_keyOnVoiceRaw(u32 core, u32 voice_id) {
+  voice.key_on();
+}
 
-void snd_keyOffVoiceRaw(u32, u32) {}
+void snd_keyOffVoiceRaw(u32 core, u32 voice_id) {
+  voice.key_off();
+}
