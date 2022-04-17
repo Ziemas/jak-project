@@ -474,7 +474,7 @@ u32 ISOThread() {
               }
             }
           } else {
-            if (in_progress_vag_command && !!in_progress_vag_command->paused &&
+            if (in_progress_vag_command && !in_progress_vag_command->paused &&
                 cmd->priority < in_progress_vag_command->priority) {
               thing = false;
             }
@@ -1100,6 +1100,16 @@ static s32 CheckVAGStreamProgress(VagCommand* vag) {
     return 1;
   }
 
+
+  if (((gPlayPos < 0x6000) && (vag->buffer_line < 0x6000)) ||
+      ((0x5fff < gPlayPos && (0x5fff < vag->buffer_line)))) {
+    if ((vag->unk2 == 0) && (gPlayPos < vag->buffer_line)) {
+      sceSdSetAddr(gVoice | SD_VA_LSAX, gStreamSRAM + vag->buffer_line);
+      vag->unk2 = 1;
+    }
+    return 1;
+  }
+
   if (vag->buffer_line == -1) {
     if (gPlayPos < 0x6000) {
       if ((vag->buffer_number & 1) == 0) {
@@ -1119,15 +1129,6 @@ static s32 CheckVAGStreamProgress(VagCommand* vag) {
 
   if ((gPlayPos & 0xFFFFFFF0) == vag->buffer_line) {
     return 0;
-  }
-
-  if (((gPlayPos < 0x6000) && (vag->buffer_line < 0x6000)) ||
-      ((0x5fff < gPlayPos && (0x5fff < vag->buffer_line)))) {
-    if ((vag->unk2 == 0) && (gPlayPos < vag->buffer_line)) {
-      sceSdSetAddr(gVoice | SD_VA_LSAX, gStreamSRAM + vag->buffer_line);
-      vag->unk2 = 1;
-    }
-    return 1;
   }
 
   return 1;

@@ -4,7 +4,7 @@
 #include "game/sound/common/voice.h"
 #include "third-party/fmt/core.h"
 
-snd::voice voice;
+std::shared_ptr<snd::voice> voice;
 
 static u8 spu_memory[0xc060];
 static sceSdTransIntrHandler trans_handler[2] = {nullptr, nullptr};
@@ -17,12 +17,12 @@ u32 sceSdGetSwitch(u32 entry) {
 
 u32 sceSdGetAddr(u32 entry) {
   // u32 core = entry & 1;
-  // u32 voice_id = (entry >> 1) & 0x1f;
+  // u32 voice->id = (entry >> 1) & 0x1f;
   // u32 reg = entry & ~0x3f;
 
   // Only ever used for getting NAX
 
-  return voice.get_nax();
+  return voice->get_nax();
 }
 
 void sceSdSetSwitch(u32 entry, u32 value) {
@@ -36,10 +36,10 @@ void sceSdSetAddr(u32 entry, u32 value) {
 
   switch (reg) {
     case SD_VA_SSA: {
-      voice.set_sample((u16*)&spu_memory[value]);
+      voice->set_sample((u16*)&spu_memory[value]);
     } break;
     case SD_VA_LSAX: {
-      voice.set_lsa(value);
+      voice->set_lsa(value);
     } break;
   }
 }
@@ -51,19 +51,19 @@ void sceSdSetParam(u32 entry, u32 value) {
 
   switch (reg) {
     case SD_VP_VOLL: {
-      voice.set_volume_l(value);
+      voice->set_volume_l(value);
     } break;
     case SD_VP_VOLR: {
-      voice.set_volume_r(value);
+      voice->set_volume_r(value);
     } break;
     case SD_VP_PITCH: {
-      voice.set_pitch(value);
+      voice->set_pitch(value);
     } break;
     case SD_VP_ADSR1: {
-      voice.set_asdr1(value);
+      voice->set_asdr1(value);
     } break;
     case SD_VP_ADSR2: {
-      voice.set_asdr2(value);
+      voice->set_asdr2(value);
     } break;
     default: {
     } break;
