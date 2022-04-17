@@ -13,7 +13,7 @@
 #define SD_VP_ADSR2 (0x04 << 8)
 #define SD_VA_NAX ((0x22 << 8) + (0x01 << 6))
 
-extern snd::voice voice;
+extern std::shared_ptr<snd::voice> voice;
 
 using sceSdTransIntrHandler = int (*)(int, void*);
 

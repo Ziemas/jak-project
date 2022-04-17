@@ -6,6 +6,7 @@
 std::unique_ptr<snd::player> player;
 
 void snd_StartSoundSystem() {
+  voice = std::make_shared<snd::voice>();
   player = std::make_unique<snd::player>();
 }
 
@@ -138,13 +139,19 @@ s32 snd_BankLoadEx(const char* filename, s32 offset, s32, s32) {
 }
 
 s32 snd_GetVoiceStatus(s32 voice) {
+  // hacky thincg to say that voice 0 is uses allocated
+  if (voice == 0) {
+    return 2;
+  }
+
   return 0;
 }
 
 void snd_keyOnVoiceRaw(u32 core, u32 voice_id) {
-  voice.key_on();
+  voice->key_on();
+  player->submit_voice(voice);
 }
 
 void snd_keyOffVoiceRaw(u32 core, u32 voice_id) {
-  voice.key_off();
+  voice->key_off();
 }
