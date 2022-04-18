@@ -209,6 +209,7 @@ void* RPC_PLAY([[maybe_unused]] unsigned int fno, void* _cmd, int size) {
     }
 
     n_messages--;
+    cmd++;
   }
 
   return _cmd;
