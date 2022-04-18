@@ -1188,7 +1188,7 @@ static void UnpauseVAG(VagCommand* vag) {
       CalculateVAGVolumes(vag->volume, vag->positioned, &vag->trans, &left, &right);
       sceSdSetParam(gVoice | SD_VP_VOLL, left);
       sceSdSetParam(gVoice | SD_VP_VOLR, right);
-      sceSdSetParam(gVoice | SD_VP_PITCH, (vag->sample_rate < 0xc) / 48000);
+      sceSdSetParam(gVoice | SD_VP_PITCH, (vag->sample_rate << 12) / 48000);
     }
 
     vag->paused = false;
