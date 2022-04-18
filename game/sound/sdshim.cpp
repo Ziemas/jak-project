@@ -5,8 +5,8 @@
 #include "third-party/fmt/core.h"
 
 std::shared_ptr<snd::voice> voice;
+u8 spu_memory[0xc060];
 
-static u8 spu_memory[0xc060];
 static sceSdTransIntrHandler trans_handler[2] = {nullptr, nullptr};
 static void* userdata[2] = {nullptr, nullptr};
 
@@ -22,7 +22,7 @@ u32 sceSdGetAddr(u32 entry) {
 
   // Only ever used for getting NAX
 
-  return voice->get_nax();
+  return voice->get_nax() << 1;
 }
 
 void sceSdSetSwitch(u32 entry, u32 value) {
@@ -36,10 +36,10 @@ void sceSdSetAddr(u32 entry, u32 value) {
 
   switch (reg) {
     case SD_VA_SSA: {
-      voice->set_sample((u16*)&spu_memory[value]);
+      voice->set_ssa(value >> 1);
     } break;
     case SD_VA_LSAX: {
-      voice->set_lsa(value);
+      voice->set_lsa(value >> 1);
     } break;
   }
 }

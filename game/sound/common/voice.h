@@ -44,9 +44,14 @@ class voice {
 
   s16 get_envx() { return m_ADSR.Level(); }
 
-  void set_sample(u16* sample) { m_sample = sample; }
+  void set_sample(u16* sample) {
+    m_sample = sample;
+    m_SSA = 0;
+  }
 
   u32 get_nax() { return m_NAX; }
+
+  void set_ssa(u32 addr) { m_SSA = addr; }
 
   void set_lsa(u32 addr) {
     m_LSA = addr;
@@ -81,7 +86,7 @@ class voice {
   s16 m_Out{0};
 
   u16* m_sample{nullptr};
-  // u32 m_SSA { 0 }; probably don't need
+  u32 m_SSA{0};
   u32 m_NAX{0};
   u32 m_LSA{0};
   bool m_CustomLoop{false};
