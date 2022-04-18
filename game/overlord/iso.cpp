@@ -1041,6 +1041,7 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
                               gStreamSRAM + 0x6000)) {
       return CMD_STATUS_IN_PROGRESS;
     }
+
     if (!vag->paused) {  // FIXME clearly wrong name  // Or maybe not?
       vag->paused = 1;
       UnpauseVAG(vag);
@@ -1054,7 +1055,7 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
   }
 
   if (vag->buffer_number > 1) {
-    if ((vag->buffer_number & 1) != 0) {
+    if ((vag->buffer_number & 1) == 0) {
       if (buffer_header->data_size < vag->data_left) {
         VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
         FlushDcache();
@@ -1066,7 +1067,7 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
         return CMD_STATUS_IN_PROGRESS;
       }
 
-      sceSdSetAddr(gVoice | SD_VA_LSAX, gStreamSRAM + 0x6000);
+      sceSdSetAddr(gVoice | SD_VA_LSAX, gStreamSRAM);
     } else {
       if (buffer_header->data_size < vag->data_left) {
         VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
@@ -1079,7 +1080,8 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
                                 gStreamSRAM + 0x6000)) {
         return CMD_STATUS_IN_PROGRESS;
       }
-      sceSdSetAddr(gVoice | SD_VA_LSAX, gStreamSRAM);
+
+      sceSdSetAddr(gVoice | SD_VA_LSAX, gStreamSRAM + 0x6000);
     }
 
     vag->ready_for_data = 0;
@@ -1100,6 +1102,10 @@ static s32 CheckVAGStreamProgress(VagCommand* vag) {
     return 1;
   }
 
+  if ((gPlayPos & 0xFFFFFFF0) == vag->end_point) {
+    return 0;
+  }
+
   if (vag->end_point == -1) {
     if (gPlayPos < 0x6000) {
       if ((vag->buffer_number & 1) != 0) {
@@ -1115,10 +1121,6 @@ static s32 CheckVAGStreamProgress(VagCommand* vag) {
     }
 
     return 1;
-  }
-
-  if ((gPlayPos & 0xFFFFFFF0) == vag->end_point) {
-    return 0;
   }
 
   if (((gPlayPos < 0x6000) && (vag->end_point < 0x6000)) ||
