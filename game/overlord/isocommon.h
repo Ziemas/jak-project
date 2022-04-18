@@ -125,7 +125,7 @@ struct VagCommand : public IsoMessage {
   u32 paused;
   u32 sample_rate;
   u32 stop;
-  s32 buffer_line;
+  s32 end_point;
   u32 unk2;
   s32 volume;
   u32 sound_id;
