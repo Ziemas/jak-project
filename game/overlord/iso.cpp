@@ -1102,13 +1102,13 @@ static s32 CheckVAGStreamProgress(VagCommand* vag) {
 
   if (vag->buffer_line == -1) {
     if (gPlayPos < 0x6000) {
-      if ((vag->buffer_number & 1) == 0) {
+      if ((vag->buffer_number & 1) != 0) {
         vag->ready_for_data = 1;
         sceSdSetAddr(gVoice | SD_VA_LSAX, gTrapSRAM);
       }
 
     } else {
-      if ((vag->buffer_number & 1) == 1) {
+      if ((vag->buffer_number & 1) == 0) {
         vag->ready_for_data = 1;
         sceSdSetAddr(gVoice | SD_VA_LSAX, gTrapSRAM);
       }
