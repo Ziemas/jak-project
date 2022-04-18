@@ -257,41 +257,30 @@ IsoMessage* GetMessage() {
  * Execute callbacks and maintain buffers for finished reads in the priority stack
  */
 void ProcessMessageData() {
-  int32_t pri = N_PRIORITIES - 1;
+  for (s32 pri = N_PRIORITIES - 1; pri >= 0; pri--) {
+    for (s32 n = gPriStack[pri].n - 1; n >= 0; n--) {
+      IsoMessage* cmd = gPriStack[pri].cmds[n];
 
-  for (;;) {
-    if (pri < 0)
-      return;
-    int32_t cmdID = gPriStack[pri].n;
-    IsoMessage* popped_command;
-    do {
-      cmdID--;
-      if (cmdID < 0)
-        goto end_cur;
-      popped_command = gPriStack[pri].cmds[cmdID];
-      auto* callback_buffer = popped_command->callback_buffer;
-      if (popped_command->status == CMD_STATUS_IN_PROGRESS &&
-          callback_buffer) {  // if we have a callback buffer (meaning a read finished and let us
-                              // know)
-        // execute the callback!
-        uint32_t callback_result =
-            popped_command->callback_function(popped_command, callback_buffer);
-        popped_command->status = callback_result;
-        //        printf("ProcessMessage Data set command %p status to %d\n", popped_command,
-        //        popped_command->status);
-        // if we're done with the buffer, free it and load the next one (if there is one)
-        if (callback_buffer->data_size == 0) {
-          popped_command->callback_buffer = (IsoBufferHeader*)callback_buffer->next;
-          FreeBuffer(callback_buffer);
+      if (cmd->status == CMD_STATUS_IN_PROGRESS) {
+        IsoBufferHeader* callback_buffer = cmd->callback_buffer;
+
+        if (callback_buffer != nullptr) {
+          cmd->status = cmd->callback_function(cmd, callback_buffer);
+
+          if (callback_buffer->data_size == 0) {
+            cmd->callback_buffer = (IsoBufferHeader*)callback_buffer->next;
+            FreeBuffer(callback_buffer);
+          }
         }
       }
-    } while (popped_command->status == CMD_STATUS_IN_PROGRESS);
-    ReleaseMessage(popped_command);
-    ReturnMessage(popped_command);
-    // return message todo this will free vag commands!
-    pri++;
-  end_cur:
-    pri--;
+
+      if (cmd->status != CMD_STATUS_IN_PROGRESS) {
+        ReleaseMessage(cmd);
+        ReturnMessage(cmd);
+        pri++;
+        break;
+      }
+    }
   }
 }
 
