@@ -14,6 +14,7 @@
 #define SD_VA_NAX ((0x22 << 8) + (0x01 << 6))
 
 extern std::shared_ptr<snd::voice> voice;
+extern u8 spu_memory[0xc060];
 
 using sceSdTransIntrHandler = int (*)(int, void*);
 

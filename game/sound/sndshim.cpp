@@ -7,6 +7,7 @@ std::unique_ptr<snd::player> player;
 
 void snd_StartSoundSystem() {
   voice = std::make_shared<snd::voice>();
+  voice->set_sample((u16*)spu_memory);
   player = std::make_unique<snd::player>();
 }
 
