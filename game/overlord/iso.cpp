@@ -1102,34 +1102,33 @@ static s32 CheckVAGStreamProgress(VagCommand* vag) {
     return 1;
   }
 
-  if ((gPlayPos & 0xFFFFFFF0) == vag->end_point) {
-    return 0;
-  }
-
-  if (vag->end_point == -1) {
-    if (gPlayPos < 0x6000) {
-      if ((vag->buffer_number & 1) != 0) {
-        vag->ready_for_data = 1;
-        sceSdSetAddr(gVoice | SD_VA_LSAX, gTrapSRAM);
-      }
-
-    } else {
-      if ((vag->buffer_number & 1) == 0) {
-        vag->ready_for_data = 1;
-        sceSdSetAddr(gVoice | SD_VA_LSAX, gTrapSRAM);
-      }
+  if (vag->end_point != -1) {
+    if ((gPlayPos & 0xFFFFFFF0) == vag->end_point) {
+      return 0;
     }
 
-    return 1;
+    if (((gPlayPos < 0x6000) && (vag->end_point < 0x6000)) ||
+        ((0x5fff < gPlayPos && (0x5fff < vag->end_point)))) {
+      if ((vag->unk2 == 0) && (gPlayPos < vag->end_point)) {
+        sceSdSetAddr(gVoice | SD_VA_LSAX, gStreamSRAM + vag->end_point);
+        vag->unk2 = 1;
+      }
+
+      return 1;
+    }
   }
 
-  if (((gPlayPos < 0x6000) && (vag->end_point < 0x6000)) ||
-      ((0x5fff < gPlayPos && (0x5fff < vag->end_point)))) {
-    if ((vag->unk2 == 0) && (gPlayPos < vag->end_point)) {
-      sceSdSetAddr(gVoice | SD_VA_LSAX, gStreamSRAM + vag->end_point);
-      vag->unk2 = 1;
+  if (gPlayPos < 0x6000) {
+    if ((vag->buffer_number & 1) != 0) {
+      vag->ready_for_data = 1;
+      sceSdSetAddr(gVoice | SD_VA_LSAX, gTrapSRAM);
     }
-    return 1;
+
+  } else {
+    if ((vag->buffer_number & 1) == 0) {
+      vag->ready_for_data = 1;
+      sceSdSetAddr(gVoice | SD_VA_LSAX, gTrapSRAM);
+    }
   }
 
   return 1;
