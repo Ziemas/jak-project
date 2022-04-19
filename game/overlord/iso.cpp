@@ -44,16 +44,16 @@ static void VAG_MarkLoopEnd(void* data, u32 size);
 constexpr int LOADING_SCREEN_SIZE = 0x800000;
 constexpr u32 LOADING_SCREEN_DEST_ADDR = 0x1000000;
 
-static constexpr s32 loop_end = 1;
-static constexpr s32 loop_repeat = 2;
-static constexpr s32 loop_start = 4;
+static constexpr s32 LOOP_END = 1;
+static constexpr s32 LOOP_REPEAT = 2;
+static constexpr s32 LOOP_START = 4;
 
 // Empty ADPCM block with loop flags
 // clang-format off
 static u8 VAG_SilentLoop[48] = {
-    0x0, loop_start | loop_repeat, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-    0x0, loop_repeat,              0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-    0x0, loop_end | loop_repeat,   0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, LOOP_START | LOOP_REPEAT, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, LOOP_REPEAT,              0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+    0x0, LOOP_END | LOOP_REPEAT,   0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
 };
 // clang-format on
 
@@ -1056,7 +1056,7 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
   }
 
   if (vag->buffer_number > 1) {
-    if ((vag->buffer_number & 1) == 0) {
+    if ((vag->buffer_number & 1) != 0) {
       if (buffer_header->data_size < vag->data_left) {
         VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
         FlushDcache();
@@ -1064,11 +1064,11 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
         vag->end_point = vag->data_left + 0x5FF0;
       }
 
-      if (!DMA_SendToSPUAndSync(buffer_header->data, buffer_header->data_size, gStreamSRAM)) {
+      if (!DMA_SendToSPUAndSync(buffer_header->data, buffer_header->data_size, gStreamSRAM + 0x6000)) {
         return CMD_STATUS_IN_PROGRESS;
       }
 
-      sceSdSetAddr(gVoice | SD_VA_LSAX, gStreamSRAM);
+      sceSdSetAddr(gVoice | SD_VA_LSAX, gStreamSRAM + 0x6000);
     } else {
       if (buffer_header->data_size < vag->data_left) {
         VAG_MarkLoopEnd(buffer_header->data, buffer_header->data_size);
@@ -1078,11 +1078,11 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
       }
 
       if (!DMA_SendToSPUAndSync(buffer_header->data, buffer_header->data_size,
-                                gStreamSRAM + 0x6000)) {
+                                gStreamSRAM)) {
         return CMD_STATUS_IN_PROGRESS;
       }
 
-      sceSdSetAddr(gVoice | SD_VA_LSAX, gStreamSRAM + 0x6000);
+      sceSdSetAddr(gVoice | SD_VA_LSAX, gStreamSRAM);
     }
 
     vag->ready_for_data = 0;
