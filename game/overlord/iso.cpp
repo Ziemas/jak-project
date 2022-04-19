@@ -1043,7 +1043,7 @@ static u32 ProcessVAGData(IsoMessage* _cmd, IsoBufferHeader* buffer_header) {
       return CMD_STATUS_IN_PROGRESS;
     }
 
-    if (!vag->paused) {  // FIXME clearly wrong name  // Or maybe not?
+    if (!vag->paused) {
       vag->paused = 1;
       UnpauseVAG(vag);
     }
