@@ -12,12 +12,24 @@ namespace snd {
 
 class voice {
  public:
+  enum class AllocationType {
+    managed,
+    permanent,
+  };
+
+  voice(AllocationType alloc = AllocationType::managed) : m_Alloc(alloc) {}
   s16_output run();
 
   void key_on();
   void key_off();
 
-  bool dead() { return m_ADSR.GetPhase() == ADSR::Phase::Stopped; }
+  bool dead() {
+    if (m_Alloc == AllocationType::permanent) {
+      return false;
+    }
+
+    return m_ADSR.GetPhase() == ADSR::Phase::Stopped;
+  }
 
   void set_pitch(u16 reg) {
     // fmt::print("VOICE[{}] PITCH WRITE {:x}\n", m_channel, reg);
@@ -68,6 +80,7 @@ class voice {
     bitfield<u16, u8, 0, 4> Shift;
   };
 
+  AllocationType m_Alloc;
   bool m_Noise{false};
   bool m_PitchMod{false};
   bool m_KeyOn{false};
