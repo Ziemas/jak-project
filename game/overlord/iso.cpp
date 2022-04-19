@@ -396,6 +396,7 @@ u32 ISOThread() {
           // if there's an in progress vag command, try again.
           if (in_progress_vag_command && !in_progress_vag_command->paused) {
             SendMbx(iso_mbx, msg_from_mbx);
+            break;
           }
 
           auto buff = TryAllocateBuffer(BUFFER_PAGE_SIZE);
