@@ -17,9 +17,6 @@ static constexpr std::array<std::array<s16, 2>, 5> adpcm_coefs = {{
 }};
 
 void voice::DecodeSamples() {
-  // we shouldn't need accurate block header behaviour :(
-  UpdateBlockHeader();
-
   // This doesn't exactly match the real behaviour,
   // it seems to initially decode a bigger chunk
   // and then decode more data after a bit has drained
@@ -68,6 +65,8 @@ void voice::DecodeSamples() {
       }
     }
 
+    UpdateBlockHeader();
+
     m_NAX++;
   }
 }
@@ -85,6 +84,8 @@ static s16 ApplyVolume(s16 sample, s32 volume) {
 void voice::key_on() {
   m_NAX = m_SSA;
   m_NAX++;
+
+  UpdateBlockHeader();
 
   m_ENDX = false;
   m_ADSR.Attack();
