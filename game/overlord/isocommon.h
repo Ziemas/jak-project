@@ -40,6 +40,7 @@ constexpr int PAUSE_VAG_STREAM = 0x403;          // Command to pause a vag strea
 constexpr int CONTINUE_VAG_STREAM = 0x404;       // Command to continue a vag stream
 constexpr int SET_VAG_VOLUME = 0x405;            // Command to set the volume of vag playback
 constexpr int SET_DIALOG_VOLUME = 0x406;         // Command to set the volume of vag playback
+constexpr int SET_VAG_SPEED = 0x407;         // Command to set the volume of vag playback
 
 constexpr int MAX_ISO_FILES = 350;  // maximum files on FS
 constexpr int MAX_OPEN_FILES = 16;  // maximum number of open files at a time.
@@ -131,6 +132,7 @@ struct VagCommand : public IsoMessage {
   u32 sound_id;
   u32 priority;
   u32 positioned;
+  u32 speed;
   Vec3w trans;
 };
 

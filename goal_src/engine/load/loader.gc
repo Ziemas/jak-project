@@ -1000,9 +1000,12 @@
               (if (= (-> self skel root-channel 0) (-> self skel channel))
                   (logior! (-> self skel status) (janim-status spool))
                   )
-              (if (or (arg3 self)
-                      (and (<= sv-72 0) (>= (- (-> *display* base-frame-counter) sv-40) 1200))
-                      (and (< 300 sv-56) (<= sv-72 0))
+
+              (when (arg3 self)
+                (str-set-speed (-> arg0 name) #x4000))
+
+              (when (or (and (<= sv-72 0) (>= (- (-> *display* base-frame-counter) sv-40) 1200))
+                        (and (< 300 sv-56) (<= sv-72 0))
                       )
                   (goto cfg-88)
                   )

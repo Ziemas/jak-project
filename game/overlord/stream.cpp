@@ -204,6 +204,8 @@ void* RPC_PLAY([[maybe_unused]] unsigned int fno, void* _cmd, int size) {
       PlayVAGStream(file, vag, cmd->address, 0x400, 1, nullptr);
     } else if (cmd->result == 1) {
       StopVAGStream(vag, 1);
+    } else if (cmd->result == 3) {
+      SetVAGPitch(cmd->address);
     } else {
       QueueVAGStream(file, vag, 0, 1);
     }

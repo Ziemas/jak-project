@@ -40,6 +40,7 @@ static void SetVAGVol();
 static s32 GetPlayPos();
 static void UpdatePlayPos();
 static void VAG_MarkLoopEnd(void* data, u32 size);
+static void SetVAGPitch();
 
 constexpr int LOADING_SCREEN_SIZE = 0x800000;
 constexpr u32 LOADING_SCREEN_DEST_ADDR = 0x1000000;
@@ -577,6 +578,14 @@ u32 ISOThread() {
             SetVAGVol();
           ReturnMessage(cmd);
         } break;
+        case SET_VAG_SPEED: {
+          auto* cmd = (VagCommand*)msg_from_mbx;
+          if (in_progress_vag_command) {
+            in_progress_vag_command->speed = cmd->speed;
+            SetVAGPitch();
+          }
+          ReturnMessage(cmd);
+        } break;
         default:
           printf("[OVERLORD] Unknown ISOThread message id 0x%x\n", msg_from_mbx->cmd_id);
       }
@@ -968,6 +977,7 @@ static void InitVAGCmd(VagCommand* cmd, u32 x) {
   gPlayPos = 48;
   cmd->messagebox_to_reply = 0;
   cmd->thread_id = 0;
+  cmd->speed = 0x1000;
 }
 
 /*!
@@ -1189,7 +1199,8 @@ static void UnpauseVAG(VagCommand* vag) {
       CalculateVAGVolumes(vag->volume, vag->positioned, &vag->trans, &left, &right);
       sceSdSetParam(gVoice | SD_VP_VOLL, left);
       sceSdSetParam(gVoice | SD_VP_VOLR, right);
-      sceSdSetParam(gVoice | SD_VP_PITCH, (vag->sample_rate << 12) / 48000);
+      sceSdSetParam(gVoice | SD_VP_PITCH,
+                    (((vag->sample_rate << 12) / 48000) * vag->speed) / 0x1000);
     }
 
     vag->paused = false;
@@ -1202,6 +1213,13 @@ static void SetVAGVol() {
     CalculateVAGVolumes(gVAGCMD->volume, gVAGCMD->positioned, &gVAGCMD->trans, &left, &right);
     sceSdSetParam(gVoice | SD_VP_VOLL, left);
     sceSdSetParam(gVoice | SD_VP_VOLR, right);
+  }
+}
+
+static void SetVAGPitch() {
+  if (gVAGCMD && gVAGCMD->started && !gVAGCMD->paused) {
+    sceSdSetParam(gVoice | SD_VP_PITCH,
+                  (((gVAGCMD->sample_rate << 12) / 48000) * gVAGCMD->speed) / 0x1000);
   }
 }
 

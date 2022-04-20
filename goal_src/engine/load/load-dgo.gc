@@ -246,6 +246,16 @@ struct DgoHeader {
   (none)
   )
 
+(defun str-set-speed ((name string) (speed int))
+  (let ((cmd (the-as load-chunk-msg (add-element *play-str-rpc*))))
+    (set! (-> cmd basename 0) (the-as uint 36)) ;; a '$' char
+    (charp<-string (&-> cmd basename 1) name)
+    (set! (-> cmd result) (load-msg-result aborted))
+    (set! (-> cmd address) (the-as pointer speed))
+    )
+  (none)
+  )
+
 (defun str-play-kick ()
   "Call str RPC if we aren't busy"
   ;; is written with an empty body for the first case.

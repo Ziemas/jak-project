@@ -23,3 +23,4 @@ void SetDialogVolume(s32 volume);
 void StopVAGStream(VagDirEntry* vag, u32 unk);
 void PauseVAGStream();
 void UnpauseVAGStream();
+void SetVAGPitch(u32 speed);
