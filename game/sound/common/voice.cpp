@@ -106,16 +106,13 @@ void voice::key_off() {
 s16_output voice::run() {
   DecodeSamples();
 
+  u32 index = (m_Counter & 0x0FF0) >> 4;
+
   s16 sample = 0;
-  if (m_Noise) [[unlikely]] {
-    // sample = m_SPU.NoiseLevel();
-  } else {
-    u32 index = (m_Counter & 0x0FF0) >> 4;
-    sample = static_cast<s16>(sample + ((m_DecodeBuf.Peek(0) * interp_table[index][0]) >> 15));
-    sample = static_cast<s16>(sample + ((m_DecodeBuf.Peek(1) * interp_table[index][1]) >> 15));
-    sample = static_cast<s16>(sample + ((m_DecodeBuf.Peek(2) * interp_table[index][2]) >> 15));
-    sample = static_cast<s16>(sample + ((m_DecodeBuf.Peek(3) * interp_table[index][3]) >> 15));
-  }
+  sample = static_cast<s16>(sample + ((m_DecodeBuf.Peek(0) * interp_table[index][0]) >> 15));
+  sample = static_cast<s16>(sample + ((m_DecodeBuf.Peek(1) * interp_table[index][1]) >> 15));
+  sample = static_cast<s16>(sample + ((m_DecodeBuf.Peek(2) * interp_table[index][2]) >> 15));
+  sample = static_cast<s16>(sample + ((m_DecodeBuf.Peek(3) * interp_table[index][3]) >> 15));
 
   s32 step = m_Pitch;
   step = std::min(step, 0x3FFF);
