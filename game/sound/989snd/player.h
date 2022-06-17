@@ -75,5 +75,6 @@ class player {
                              void* output_buffer,
                              long len);
   static void state_callback(cubeb_stream* stream, void* user, cubeb_state state);
+  static void log_callback(const char* fmt, ...);
 };
 }  // namespace snd

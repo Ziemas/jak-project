@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: ISC
 #include "player.h"
 #include <third-party/fmt/core.h>
+#include <cstdarg>
 #include <fstream>
 
 #ifdef _WIN32
@@ -30,6 +31,8 @@ void player::init_cubeb() {
 #endif
 
   cubeb_init(&m_ctx, "OpenGOAL", nullptr);
+
+  cubeb_set_log_callback(CUBEB_LOG_VERBOSE, &log_callback);
 
   cubeb_stream_params outparam = {};
   outparam.channels = 2;
@@ -70,6 +73,13 @@ void player::destroy_cubeb() {
     m_coinitialized = false;
   }
 #endif
+}
+
+void player::log_callback(const char* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  vprintf(fmt, args);
+  va_end(args);
 }
 
 long player::sound_callback([[maybe_unused]] cubeb_stream* stream,
