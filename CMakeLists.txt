@@ -160,13 +160,15 @@ add_subdirectory(lsp)
 add_subdirectory(third-party/libco)
 
 # build glfw library
-add_subdirectory(third-party/glfw EXCLUDE_FROM_ALL)
 add_subdirectory(third-party/zstd EXCLUDE_FROM_ALL)
+
+add_subdirectory(third-party/sdl2 EXCLUDE_FROM_ALL)
 
 # build imgui
 include_directories(third-party/glad/include)
-include_directories(third-party/glfw/include)
 add_subdirectory(third-party/imgui EXCLUDE_FROM_ALL)
+include_directories(third-party/sdl2/include)
+add_subdirectory(third-party/imgui)
 string(REPLACE " ${THIRDPARTY_IGNORED_WARNINGS} " "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 # build the game code in C++
