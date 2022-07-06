@@ -159,14 +159,14 @@ add_subdirectory(lsp)
 # build libco
 add_subdirectory(third-party/libco)
 
+include(SDLOptions)
 add_subdirectory(third-party/zstd EXCLUDE_FROM_ALL)
 add_subdirectory(third-party/sdl2 EXCLUDE_FROM_ALL)
 
 # build imgui
 include_directories(third-party/glad/include)
-add_subdirectory(third-party/imgui EXCLUDE_FROM_ALL)
 include_directories(third-party/sdl2/include)
-add_subdirectory(third-party/imgui)
+add_subdirectory(third-party/imgui EXCLUDE_FROM_ALL)
 string(REPLACE " ${THIRDPARTY_IGNORED_WARNINGS} " "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 # build the game code in C++

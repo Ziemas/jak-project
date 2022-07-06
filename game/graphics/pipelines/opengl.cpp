@@ -27,9 +27,9 @@
 #include "game/system/newpad.h"
 
 #include "third-party/imgui/imgui.h"
-#include "third-party/imgui/imgui_impl_glfw.h"
 #include "third-party/imgui/imgui_impl_opengl3.h"
 #define STBI_WINDOWS_UTF8
+#include "third-party/imgui/imgui_impl_sdl.h"
 #include "third-party/stb_image/stb_image.h"
 
 namespace {
@@ -78,72 +78,45 @@ struct GraphicsData {
 
 std::unique_ptr<GraphicsData> g_gfx_data;
 
-void SetDisplayCallbacks(GLFWwindow* d) {
-  glfwSetKeyCallback(
-      d, [](GLFWwindow* window, int key, int /*scancode*/, int action, int /*mods*/) {
-        if (action == GlfwKeyAction::Press) {
-          // lg::debug("KEY PRESS:   key: {} scancode: {} mods: {:X}", key, scancode, mods);
-          Pad::OnKeyPress(key);
-        } else if (action == GlfwKeyAction::Release) {
-          // lg::debug("KEY RELEASE: key: {} scancode: {} mods: {:X}", key, scancode, mods);
-          Pad::OnKeyRelease(key);
-          GLDisplay* display = reinterpret_cast<GLDisplay*>(glfwGetWindowUserPointer(window));
-          if (display != NULL) {  // toggle ImGui when pressing Alt
-            if ((key == GLFW_KEY_LEFT_ALT || key == GLFW_KEY_RIGHT_ALT) &&
-                glfwGetWindowAttrib(window, GLFW_FOCUSED)) {
-              display->set_imgui_visible(!display->is_imgui_visible());
-            }
-          }
-        }
-      });
-}
-
-void ErrorCallback(int err, const char* msg) {
-  lg::error("GLFW ERR {}: {}", err, std::string(msg));
-}
-
 bool HasError() {
-  const char* ptr;
-  if (glfwGetError(&ptr) != GLFW_NO_ERROR) {
+  return false;
+  const char* ptr = SDL_GetError();
+  if (strlen(ptr)) {
     lg::error("glfw error: {}", ptr);
     return true;
   } else {
     return false;
   }
 }
-
 }  // namespace
 
 static bool gl_inited = false;
 static int gl_init(GfxSettings& settings) {
-  if (glfwSetErrorCallback(ErrorCallback) != NULL) {
-    lg::warn("glfwSetErrorCallback has been re-set!");
-  }
-
-  if (glfwInit() == GLFW_FALSE) {
-    lg::error("glfwInit error");
+  if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMECONTROLLER | SDL_INIT_JOYSTICK | SDL_INIT_HAPTIC) !=
+      0) {
+    lg::error("SDL_Init error");
     return 1;
   }
 
   // request an OpenGL 4.3 Core context
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);  // 4.3
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // core profile, not compat
+  SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+  SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
   // debug check
   if (settings.debug) {
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_TRUE);
-  } else {
-    glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GLFW_FALSE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
   }
-  glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
 
+  // glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_TRUE);
+  // glfwWindowHint(GLFW_SAMPLES, 1);
+  // glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
   return 0;
 }
 
 static void gl_exit() {
   g_gfx_data.reset();
-  glfwTerminate();
-  glfwSetErrorCallback(NULL);
+  SDL_Quit();
   gl_inited = false;
 }
 
@@ -153,16 +126,19 @@ static std::shared_ptr<GfxDisplay> gl_make_display(int width,
                                                    GfxSettings& settings,
                                                    GameVersion game_version,
                                                    bool is_main) {
-  GLFWwindow* window = glfwCreateWindow(width, height, title, NULL, NULL);
+  SDL_Window* window = SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                                        width, height, SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 
   if (!window) {
     lg::error("gl_make_display failed - Could not create display window");
     return NULL;
   }
 
-  glfwMakeContextCurrent(window);
+  SDL_GLContext context = SDL_GL_CreateContext(window);
+  SDL_GL_MakeCurrent(window, context);
+
   if (!gl_inited) {
-    gladLoadGLLoader((GLADloadproc)glfwGetProcAddress);
+    gladLoadGLLoader(SDL_GL_GetProcAddress);
     if (!gladLoadGL()) {
       lg::error("GL init fail");
       return NULL;
@@ -176,17 +152,19 @@ static std::shared_ptr<GfxDisplay> gl_make_display(int width,
   std::string image_path =
       (file_util::get_jak_project_dir() / "game" / "assets" / "appicon.png").string();
 
-  GLFWimage images[1];
-  auto load_result = stbi_load(image_path.c_str(), &images[0].width, &images[0].height, 0, 4);
+  SDL_Surface* image;
+  int w, h;
+  auto load_result = stbi_load(image_path.c_str(), &w, &h, nullptr, STBI_rgb_alpha);
   if (load_result) {
-    images[0].pixels = load_result;  // rgba channels
-    glfwSetWindowIcon(window, 1, images);
-    stbi_image_free(images[0].pixels);
+    image =
+        SDL_CreateRGBSurfaceWithFormatFrom(load_result, w, h, 32, 4 * w, SDL_PIXELFORMAT_RGBA32);
+    SDL_SetWindowIcon(window, image);
+    SDL_FreeSurface(image);
+    stbi_image_free(load_result);
   } else {
     lg::error("Could not load icon for OpenGL window");
   }
 
-  SetDisplayCallbacks(window);
   Pad::initialize();
 
   if (HasError()) {
@@ -213,12 +191,34 @@ static std::shared_ptr<GfxDisplay> gl_make_display(int width,
   io.LogFilename = g_gfx_data->imgui_log_filename.c_str();
 
   // set up to get inputs for this window
-  ImGui_ImplGlfw_InitForOpenGL(window, true);
+  ImGui_ImplSDL2_InitForOpenGL(window, context);
 
   // NOTE: imgui's setup calls functions that may fail intentionally, and attempts to disable error
   // reporting so these errors are invisible. But it does not work, and some weird X11 default
   // cursor error is set here that we clear.
-  glfwGetError(NULL);
+  SDL_ClearError();
+
+  auto check_exit = [](void* data, SDL_Event* evt) {
+    auto display = (GLDisplay*)data;
+    if (evt->type == SDL_QUIT) {
+      display->should_quit = true;
+    }
+
+    if (evt->type == SDL_KEYUP) {
+      if (evt->key.keysym.sym == SDLK_LALT) {
+        display->set_imgui_visible(!display->is_imgui_visible());
+      }
+    }
+
+    if (!display->should_quit) {
+      ImGui_ImplSDL2_ProcessEvent(evt);
+    }
+
+    return 1;
+  };
+
+  // HACK
+  SDL_AddEventWatch(check_exit, display.get());
 
   // set up the renderer
   ImGui_ImplOpenGL3_Init("#version 430");
@@ -226,20 +226,20 @@ static std::shared_ptr<GfxDisplay> gl_make_display(int width,
   return std::static_pointer_cast<GfxDisplay>(display);
 }
 
-GLDisplay::GLDisplay(GLFWwindow* window, bool is_main) : m_window(window) {
+GLDisplay::GLDisplay(SDL_Window* window, bool is_main) : m_window(window) {
   m_main = is_main;
-  glfwSetWindowUserPointer(window, reinterpret_cast<void*>(this));
+  // glfwSetWindowUserPointer(window, reinterpret_cast<void*>(this));
 }
 
 GLDisplay::~GLDisplay() {
   ImGuiIO& io = ImGui::GetIO();
   io.IniFilename = nullptr;
   io.LogFilename = nullptr;
-  glfwSetWindowUserPointer(m_window, nullptr);
+  // glfwSetWindowUserPointer(m_window, nullptr);
   ImGui_ImplOpenGL3_Shutdown();
-  ImGui_ImplGlfw_Shutdown();
+  ImGui_ImplSDL2_Shutdown();
   ImGui::DestroyContext();
-  glfwDestroyWindow(m_window);
+  SDL_DestroyWindow(m_window);
   if (m_main) {
     gl_exit();
   }
@@ -340,127 +340,130 @@ void render_game_frame(int game_width,
 }
 
 void GLDisplay::get_position(int* x, int* y) {
-  glfwGetWindowPos(m_window, x, y);
+  SDL_GetWindowPosition(m_window, x, y);
 }
 
 void GLDisplay::get_size(int* width, int* height) {
-  glfwGetFramebufferSize(m_window, width, height);
+  SDL_GL_GetDrawableSize(m_window, width, height);
 }
 
 void GLDisplay::get_scale(float* xs, float* ys) {
-  glfwGetWindowContentScale(m_window, xs, ys);
+  // glfwGetWindowContentScale(m_window, xs, ys);
 }
 
 void GLDisplay::set_size(int width, int height) {
-  glfwSetWindowSize(m_window, width, height);
+  SDL_SetWindowSize(m_window, width, height);
 }
 
 void GLDisplay::update_fullscreen(GfxDisplayMode mode, int /*screen*/) {
-  GLFWmonitor* monitor = glfwGetPrimaryMonitor();  // todo
-  switch (mode) {
-    case GfxDisplayMode::Windowed: {
-      // windowed
-      glfwSetWindowAttrib(m_window, GLFW_DECORATED, GLFW_TRUE);
-      glfwSetWindowFocusCallback(m_window, NULL);
-      glfwSetWindowAttrib(m_window, GLFW_FLOATING, GLFW_FALSE);
-      glfwSetWindowMonitor(m_window, NULL, xpos_backup(), ypos_backup(), width_backup(),
-                           height_backup(), GLFW_DONT_CARE);
-      set_imgui_visible(true);
-    } break;
-    case GfxDisplayMode::Fullscreen: {
-      // fullscreen
-      if (windowed()) {
-        backup_params();
-      }
-      const GLFWvidmode* vmode = glfwGetVideoMode(monitor);
-      glfwSetWindowAttrib(m_window, GLFW_DECORATED, GLFW_FALSE);
-      glfwSetWindowFocusCallback(m_window, NULL);
-      glfwSetWindowAttrib(m_window, GLFW_FLOATING, GLFW_FALSE);
-      glfwSetWindowMonitor(m_window, monitor, 0, 0, vmode->width, vmode->height, GLFW_DONT_CARE);
-      set_imgui_visible(false);
-    } break;
-    case GfxDisplayMode::Borderless: {
-      // borderless fullscreen
-      if (windowed()) {
-        backup_params();
-      }
-      int x, y;
-      glfwGetMonitorPos(monitor, &x, &y);
-      const GLFWvidmode* vmode = glfwGetVideoMode(monitor);
-      glfwSetWindowAttrib(m_window, GLFW_DECORATED, GLFW_FALSE);
-      // glfwSetWindowAttrib(m_window, GLFW_FLOATING, GLFW_TRUE);
-      // glfwSetWindowFocusCallback(m_window, FocusCallback);
-#ifdef _WIN32
-      glfwSetWindowMonitor(m_window, NULL, x, y, vmode->width, vmode->height + 1, GLFW_DONT_CARE);
-#else
-      glfwSetWindowMonitor(m_window, NULL, x, y, vmode->width, vmode->height, GLFW_DONT_CARE);
-#endif
-      set_imgui_visible(false);
-    } break;
-  }
+  //  GLFWmonitor* monitor = glfwGetPrimaryMonitor();  // todo
+  //  switch (mode) {
+  //    case GfxDisplayMode::Windowed: {
+  //      // windowed
+  //      glfwSetWindowAttrib(m_window, GLFW_DECORATED, GLFW_TRUE);
+  //      glfwSetWindowFocusCallback(m_window, NULL);
+  //      glfwSetWindowAttrib(m_window, GLFW_FLOATING, GLFW_FALSE);
+  //      glfwSetWindowMonitor(m_window, NULL, xpos_backup(), ypos_backup(), width_backup(),
+  //                           height_backup(), GLFW_DONT_CARE);
+  //      set_imgui_visible(true);
+  //    } break;
+  //    case GfxDisplayMode::Fullscreen: {
+  //      // fullscreen
+  //      if (windowed()) {
+  //        backup_params();
+  //      }
+  //      const GLFWvidmode* vmode = glfwGetVideoMode(monitor);
+  //      glfwSetWindowAttrib(m_window, GLFW_DECORATED, GLFW_FALSE);
+  //      glfwSetWindowFocusCallback(m_window, NULL);
+  //      glfwSetWindowAttrib(m_window, GLFW_FLOATING, GLFW_FALSE);
+  //      glfwSetWindowMonitor(m_window, monitor, 0, 0, vmode->width, vmode->height,
+  //      GLFW_DONT_CARE); set_imgui_visible(false);
+  //    } break;
+  //    case GfxDisplayMode::Borderless: {
+  //      // borderless fullscreen
+  //      if (windowed()) {
+  //        backup_params();
+  //      }
+  //      int x, y;
+  //      glfwGetMonitorPos(monitor, &x, &y);
+  //      const GLFWvidmode* vmode = glfwGetVideoMode(monitor);
+  //      glfwSetWindowAttrib(m_window, GLFW_DECORATED, GLFW_FALSE);
+  //      // glfwSetWindowAttrib(m_window, GLFW_FLOATING, GLFW_TRUE);
+  //      // glfwSetWindowFocusCallback(m_window, FocusCallback);
+  //#ifdef _WIN32
+  //      glfwSetWindowMonitor(m_window, NULL, x, y, vmode->width, vmode->height + 1,
+  //      GLFW_DONT_CARE);
+  //#else
+  //      glfwSetWindowMonitor(m_window, NULL, x, y, vmode->width, vmode->height, GLFW_DONT_CARE);
+  //#endif
+  //      set_imgui_visible(false);
+  //    } break;
+  //  }
 }
 
 GfxDisplayMode GLDisplay::get_fullscreen() {
-  GLFWmonitor* monitor = glfwGetPrimaryMonitor();  // todo
-  const GLFWvidmode* vmode = glfwGetVideoMode(monitor);
-  if (glfwGetWindowMonitor(m_window) != NULL) {
-    return GfxDisplayMode::Fullscreen;
-  } else if (width() >= vmode->width && height() >= vmode->height) {
-    return GfxDisplayMode::Borderless;
-  } else {
-    return GfxDisplayMode::Windowed;
-  }
+  //  GLFWmonitor* monitor = glfwGetPrimaryMonitor();  // todo
+  //  const GLFWvidmode* vmode = glfwGetVideoMode(monitor);
+  //  if (glfwGetWindowMonitor(m_window) != NULL) {
+  //    return GfxDisplayMode::Fullscreen;
+  //  } else if (width() >= vmode->width && height() >= vmode->height) {
+  //    return GfxDisplayMode::Borderless;
+  //  } else {
+  //    return GfxDisplayMode::Windowed;
+  //  }
 }
 
 int GLDisplay::get_screen_vmode_count() {
   int count = 0;
-  glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
+  // glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
   return count;
 }
 
 void GLDisplay::get_screen_size(int vmode_idx, s32* w_out, s32* h_out) {
-  auto vmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-  int count = 0;
-  auto vmodes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
-  if (vmode_idx >= 0) {
-    vmode = &vmodes[vmode_idx];
-  } else if (get_fullscreen() == GfxDisplayMode::Fullscreen) {
-    for (int i = 0; i < count; ++i) {
-      if (!vmode || vmode->height < vmodes[i].height) {
-        vmode = &vmodes[i];
-      }
-    }
-  }
-  if (w_out) {
-    *w_out = vmode->width;
-  }
-  if (h_out) {
-    *h_out = vmode->height;
-  }
+  //  auto vmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+  //  int count = 0;
+  //  auto vmodes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
+  //  if (vmode_idx >= 0) {
+  //    vmode = &vmodes[vmode_idx];
+  //  } else if (get_fullscreen() == GfxDisplayMode::Fullscreen) {
+  //    for (int i = 0; i < count; ++i) {
+  //      if (!vmode || vmode->height < vmodes[i].height) {
+  //        vmode = &vmodes[i];
+  //      }
+  //    }
+  //  }
+  //  if (w_out) {
+  //    *w_out = vmode->width;
+  //  }
+  //  if (h_out) {
+  //    *h_out = vmode->height;
+  //  }
 }
 
 int GLDisplay::get_screen_rate(int vmode_idx) {
-  auto vmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
-  int count = 0;
-  auto vmodes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
-  if (vmode_idx >= 0) {
-    vmode = &vmodes[vmode_idx];
-  } else if (get_fullscreen() == GfxDisplayMode::Fullscreen) {
-    for (int i = 0; i < count; ++i) {
-      if (!vmode || vmode->refreshRate < vmodes[i].refreshRate) {
-        vmode = &vmodes[i];
-      }
-    }
-  }
-  return vmode->refreshRate;
+  //  auto vmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+  //  int count = 0;
+  //  auto vmodes = glfwGetVideoModes(glfwGetPrimaryMonitor(), &count);
+  //  if (vmode_idx >= 0) {
+  //    vmode = &vmodes[vmode_idx];
+  //  } else if (get_fullscreen() == GfxDisplayMode::Fullscreen) {
+  //    for (int i = 0; i < count; ++i) {
+  //      if (!vmode || vmode->refreshRate < vmodes[i].refreshRate) {
+  //        vmode = &vmodes[i];
+  //      }
+  //    }
+  //  }
+  //  return vmode->refreshRate;
+  return 60;
 }
 
 bool GLDisplay::minimized() {
-  return glfwGetWindowAttrib(m_window, GLFW_ICONIFIED);
+  u32 flags = SDL_GetWindowFlags(m_window);
+  return flags & SDL_WINDOW_MINIMIZED;
 }
 
 void GLDisplay::set_lock(bool lock) {
-  glfwSetWindowAttrib(m_window, GLFW_RESIZABLE, lock ? GLFW_TRUE : GLFW_FALSE);
+  // glfwSetWindowAttrib(m_window, GLFW_RESIZABLE, lock ? GLFW_TRUE : GLFW_FALSE);
 }
 
 void update_global_profiler() {
@@ -479,8 +482,6 @@ void GLDisplay::render() {
   // poll events
   {
     auto p = scoped_prof("poll-gamepads");
-    glfwPollEvents();
-    glfwMakeContextCurrent(m_window);
     Pad::update_gamepads();
   }
 
@@ -488,14 +489,14 @@ void GLDisplay::render() {
   {
     auto p = scoped_prof("imgui-init");
     ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
+    ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
   }
 
   // framebuffer size
   int fbuf_w, fbuf_h;
-  glfwGetFramebufferSize(m_window, &fbuf_w, &fbuf_h);
   bool windows_borderless_hacks = false;
+  SDL_GL_GetDrawableSize(m_window, &fbuf_w, &fbuf_h);
 #ifdef _WIN32
   if (last_fullscreen_mode() == GfxDisplayMode::Borderless) {
     windows_borderless_hacks = true;
@@ -533,7 +534,7 @@ void GLDisplay::render() {
   g_gfx_data->debug_gui.finish_frame();
   {
     auto p = scoped_prof("swap-buffers");
-    glfwSwapBuffers(m_window);
+    SDL_GL_SwapWindow(m_window);
   }
   if (Gfx::g_global_settings.framelimiter) {
     auto p = scoped_prof("frame-limiter");
@@ -549,7 +550,7 @@ void GLDisplay::render() {
   // switch vsync modes, if requested
   if (Gfx::g_global_settings.vsync != Gfx::g_global_settings.old_vsync) {
     Gfx::g_global_settings.old_vsync = Gfx::g_global_settings.vsync;
-    glfwSwapInterval(Gfx::g_global_settings.vsync);
+    SDL_GL_SetSwapInterval(Gfx::g_global_settings.vsync);
   }
 
   // Start timing for the next frame.
@@ -587,7 +588,7 @@ void GLDisplay::render() {
   {
     auto p = scoped_prof("check-close-window");
     // exit if display window was closed
-    if (glfwWindowShouldClose(m_window)) {
+    if (should_quit) {
       std::unique_lock<std::mutex> lock(g_gfx_data->sync_mutex);
       MasterExit = RuntimeExitStatus::EXIT;
       g_gfx_data->sync_cv.notify_all();
@@ -673,7 +674,7 @@ void gl_texture_relocate(u32 destination, u32 source, u32 format) {
 }
 
 void gl_poll_events() {
-  glfwPollEvents();
+  // glfwPollEvents();
 }
 
 void gl_set_levels(const std::vector<std::string>& levels) {

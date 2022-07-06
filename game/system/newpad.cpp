@@ -20,17 +20,17 @@ namespace Pad {
 ********************************
 */
 
-constexpr int NUM_KEYS = GLFW_KEY_LAST + 1;
+constexpr int NUM_KEYS = SDL_NUM_SCANCODES + 1;
 // key-down status of any detected key.
 bool g_key_status[NUM_KEYS] = {0};
 // key-down status of any detected key. this is buffered for the remainder of a frame.
 bool g_buffered_key_status[NUM_KEYS] = {0};
 
-bool g_gamepad_buttons[CONTROLLER_COUNT][(int)Button::Max] = {{0}};
-float g_gamepad_analogs[CONTROLLER_COUNT][(int)Analog::Max] = {{0}};
+bool g_gamepad_buttons[CONTROLLER_COUNT][SDL_CONTROLLER_BUTTON_MAX] = {{0}};
+float g_gamepad_analogs[CONTROLLER_COUNT][SDL_CONTROLLER_AXIS_MAX] = {{0}};
 
 struct GamepadState {
-  int gamepad_idx[CONTROLLER_COUNT] = {-1, -1};
+  SDL_GameController* gamepad[CONTROLLER_COUNT] = {nullptr, nullptr};
 } g_gamepads;
 
 // input mode for controller mapping
@@ -58,7 +58,7 @@ void ClearKeys() {
 
 void OnKeyPress(int key) {
   if (input_mode == InputModeStatus::Enabled) {
-    if (key == GLFW_KEY_ESCAPE) {
+    if (key == SDL_SCANCODE_ESCAPE) {
       ExitInputMode(true);
       return;
     }
@@ -125,45 +125,45 @@ int AnalogValue(MappingInfo& /*mapping*/, Analog analog, int pad = 0) {
     return 127;
   }
 
-  if (pad == 0 && g_gamepads.gamepad_idx[0] == -1) {  // Gamepad not present - use keyboard
+  if (pad == 0 && g_gamepads.gamepad[0] == nullptr) {  // Gamepad not present - use keyboard
     // Movement controls mapped to WASD keys
-    if (g_buffered_key_status[GLFW_KEY_W] && analog == Analog::Left_Y)
+    if (g_buffered_key_status[SDL_SCANCODE_W] && analog == Analog::Left_Y)
       input += -1.0f;
-    if (g_buffered_key_status[GLFW_KEY_S] && analog == Analog::Left_Y)
+    if (g_buffered_key_status[SDL_SCANCODE_S] && analog == Analog::Left_Y)
       input += 1.0f;
-    if (g_buffered_key_status[GLFW_KEY_A] && analog == Analog::Left_X)
+    if (g_buffered_key_status[SDL_SCANCODE_A] && analog == Analog::Left_X)
       input += -1.0f;
-    if (g_buffered_key_status[GLFW_KEY_D] && analog == Analog::Left_X)
+    if (g_buffered_key_status[SDL_SCANCODE_D] && analog == Analog::Left_X)
       input += 1.0f;
 
     // Camera controls mapped to IJKL keys
-    if (g_buffered_key_status[GLFW_KEY_I] && analog == Analog::Right_Y)
+    if (g_buffered_key_status[SDL_SCANCODE_I] && analog == Analog::Right_Y)
       input += -1.0f;
-    if (g_buffered_key_status[GLFW_KEY_K] && analog == Analog::Right_Y)
+    if (g_buffered_key_status[SDL_SCANCODE_K] && analog == Analog::Right_Y)
       input += 1.0f;
-    if (g_buffered_key_status[GLFW_KEY_J] && analog == Analog::Right_X)
+    if (g_buffered_key_status[SDL_SCANCODE_J] && analog == Analog::Right_X)
       input += -1.0f;
-    if (g_buffered_key_status[GLFW_KEY_L] && analog == Analog::Right_X)
+    if (g_buffered_key_status[SDL_SCANCODE_L] && analog == Analog::Right_X)
       input += 1.0f;
-  } else if (pad == 1 && g_gamepads.gamepad_idx[1] == -1) {
+  } else if (pad == 1 && g_gamepads.gamepad[1] == nullptr) {
     // these bindings are not sane
-    if (g_buffered_key_status[GLFW_KEY_KP_5] && analog == Analog::Left_Y)
+    if (g_buffered_key_status[SDL_SCANCODE_KP_5] && analog == Analog::Left_Y)
       input += -1.0f;
-    if (g_buffered_key_status[GLFW_KEY_KP_2] && analog == Analog::Left_Y)
+    if (g_buffered_key_status[SDL_SCANCODE_KP_2] && analog == Analog::Left_Y)
       input += 1.0f;
-    if (g_buffered_key_status[GLFW_KEY_KP_1] && analog == Analog::Left_X)
+    if (g_buffered_key_status[SDL_SCANCODE_KP_1] && analog == Analog::Left_X)
       input += -1.0f;
-    if (g_buffered_key_status[GLFW_KEY_KP_3] && analog == Analog::Left_X)
+    if (g_buffered_key_status[SDL_SCANCODE_KP_3] && analog == Analog::Left_X)
       input += 1.0f;
 
     // these bindings are not sane
-    if (g_buffered_key_status[GLFW_KEY_KP_DIVIDE] && analog == Analog::Right_Y)
+    if (g_buffered_key_status[SDL_SCANCODE_KP_DIVIDE] && analog == Analog::Right_Y)
       input += -1.0f;
-    if (g_buffered_key_status[GLFW_KEY_KP_8] && analog == Analog::Right_Y)
+    if (g_buffered_key_status[SDL_SCANCODE_KP_8] && analog == Analog::Right_Y)
       input += 1.0f;
-    if (g_buffered_key_status[GLFW_KEY_KP_7] && analog == Analog::Right_X)
+    if (g_buffered_key_status[SDL_SCANCODE_KP_7] && analog == Analog::Right_X)
       input += -1.0f;
-    if (g_buffered_key_status[GLFW_KEY_KP_9] && analog == Analog::Right_X)
+    if (g_buffered_key_status[SDL_SCANCODE_KP_9] && analog == Analog::Right_X)
       input += 1.0f;
   } else {  // Gamepad present
     input = g_gamepad_analogs[pad][(int)analog];
@@ -205,31 +205,31 @@ void DefaultMapping(MappingInfo& mapping) {
   // Need someway to toggle off -- where do we have access to the game's settings?
 
   // R1 / L1
-  MapButton(mapping, Button::L1, 0, GLFW_KEY_Q);
-  MapButton(mapping, Button::R1, 0, GLFW_KEY_O);
+  MapButton(mapping, Button::L1, 0, SDL_SCANCODE_Q);
+  MapButton(mapping, Button::R1, 0, SDL_SCANCODE_O);
 
   // R2 / L2
-  MapButton(mapping, Button::L2, 0, GLFW_KEY_1);
-  MapButton(mapping, Button::R2, 0, GLFW_KEY_P);
+  MapButton(mapping, Button::L2, 0, SDL_SCANCODE_1);
+  MapButton(mapping, Button::R2, 0, SDL_SCANCODE_P);
 
   // face buttons
-  MapButton(mapping, Button::Ecks, 0, GLFW_KEY_SPACE);
-  MapButton(mapping, Button::Square, 0, GLFW_KEY_F);
-  MapButton(mapping, Button::Triangle, 0, GLFW_KEY_R);
-  MapButton(mapping, Button::Circle, 0, GLFW_KEY_E);
+  MapButton(mapping, Button::Ecks, 0, SDL_SCANCODE_SPACE);
+  MapButton(mapping, Button::Square, 0, SDL_SCANCODE_F);
+  MapButton(mapping, Button::Triangle, 0, SDL_SCANCODE_R);
+  MapButton(mapping, Button::Circle, 0, SDL_SCANCODE_E);
 
   // dpad
-  MapButton(mapping, Button::Up, 0, GLFW_KEY_UP);
-  MapButton(mapping, Button::Right, 0, GLFW_KEY_RIGHT);
-  MapButton(mapping, Button::Down, 0, GLFW_KEY_DOWN);
-  MapButton(mapping, Button::Left, 0, GLFW_KEY_LEFT);
+  MapButton(mapping, Button::Up, 0, SDL_SCANCODE_UP);
+  MapButton(mapping, Button::Right, 0, SDL_SCANCODE_RIGHT);
+  MapButton(mapping, Button::Down, 0, SDL_SCANCODE_DOWN);
+  MapButton(mapping, Button::Left, 0, SDL_SCANCODE_LEFT);
 
   // start for progress
-  MapButton(mapping, Button::Start, 0, GLFW_KEY_ENTER);
+  MapButton(mapping, Button::Start, 0, SDL_SCANCODE_RETURN);
 
   // l3/r3 for menu
-  MapButton(mapping, Button::L3, 0, GLFW_KEY_COMMA);
-  MapButton(mapping, Button::R3, 0, GLFW_KEY_PERIOD);
+  MapButton(mapping, Button::L3, 0, SDL_SCANCODE_COMMA);
+  MapButton(mapping, Button::R3, 0, SDL_SCANCODE_PERIOD);
 }
 
 void EnterInputMode() {
@@ -264,39 +264,25 @@ void input_mode_pad_set(s64 idx) {
 ********************************
 */
 
-void check_gamepads() {
-  auto check_pad = [](int pad) {  // -> bool
-    if (g_gamepads.gamepad_idx[pad] == -1) {
-      for (int i = GLFW_JOYSTICK_1; i <= GLFW_JOYSTICK_LAST; i++) {
-        if (pad == 1 && i == g_gamepads.gamepad_idx[0])
-          continue;
-        if (glfwJoystickPresent(i) && glfwJoystickIsGamepad(i)) {
-          g_gamepads.gamepad_idx[pad] = i;
-          lg::info("Using joystick {}: {}, {}", i, glfwGetJoystickName(i), glfwGetGamepadName(i));
-          break;
-        }
-      }
-    } else if (!glfwJoystickPresent(g_gamepads.gamepad_idx[pad])) {
-      lg::info("Pad {} has been disconnected", pad);
-      g_gamepads.gamepad_idx[pad] = -1;
-      return false;
-    }
-    return true;  // pad already exists or was created
-  };
-  if (check_pad(0))
-    check_pad(1);
-  else
-    g_gamepads.gamepad_idx[1] = -1;
+void open_controller(int idx) {
+  SDL_GameController* controller = SDL_GameControllerOpen(idx);
+  if (!controller) {
+    lg::error("Failed to open controller %d", idx);
+    return;
+  }
+
+  lg::info("Opened controller: %s", SDL_GameControllerName(controller));
+  g_gamepads.gamepad[0] = controller;
+}
+
+void close_controller(int instance) {
+  // SDL_GameController* controller = SDL_GameControllerFromInstanceID(instance);
 }
 
 void initialize() {
   std::string mapping_path =
       (file_util::get_jak_project_dir() / "game" / "assets" / "sdl_controller_db.txt").string();
-  glfwUpdateGamepadMappings(file_util::read_text_file(mapping_path).c_str());
-  check_gamepads();
-  if (g_gamepads.gamepad_idx[0] == -1) {
-    lg::info("No joysticks found.");
-  }
+  SDL_GameControllerAddMappingsFromFile(file_util::read_text_file(mapping_path).c_str());
 }
 
 void clear_pad(int pad) {
@@ -308,64 +294,94 @@ void clear_pad(int pad) {
   }
 }
 
-void update_gamepads() {
-  check_gamepads();
 
-  if (g_gamepads.gamepad_idx[0] == -1) {
-    clear_pad(0);
-    clear_pad(1);
+static constexpr std::array<Analog, SDL_CONTROLLER_AXIS_MAX> get_axis_map() {
+  std::array<Analog, SDL_CONTROLLER_AXIS_MAX> map{};
+  map[SDL_CONTROLLER_AXIS_LEFTX] = Analog::Left_X;
+  map[SDL_CONTROLLER_AXIS_LEFTY] = Analog::Left_Y;
+  map[SDL_CONTROLLER_AXIS_RIGHTX] = Analog::Right_X;
+  map[SDL_CONTROLLER_AXIS_RIGHTY] = Analog::Right_Y;
+
+  return map;
+}
+
+void handle_axis_event(SDL_ControllerAxisEvent& evt) {
+  if (evt.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT) {
+    g_gamepad_buttons[0][(int)Button::L2] = evt.value > 0;
+    return;
+  }
+  if (evt.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT) {
+    g_gamepad_buttons[0][(int)Button::R2] = evt.value > 0;
     return;
   }
 
-  constexpr std::pair<Button, int> gamepad_map[] = {
-      {Button::Select, GLFW_GAMEPAD_BUTTON_BACK},
-      {Button::L3, GLFW_GAMEPAD_BUTTON_LEFT_THUMB},
-      {Button::R3, GLFW_GAMEPAD_BUTTON_RIGHT_THUMB},
-      {Button::Start, GLFW_GAMEPAD_BUTTON_START},
-      {Button::Up, GLFW_GAMEPAD_BUTTON_DPAD_UP},
-      {Button::Right, GLFW_GAMEPAD_BUTTON_DPAD_RIGHT},
-      {Button::Down, GLFW_GAMEPAD_BUTTON_DPAD_DOWN},
-      {Button::Left, GLFW_GAMEPAD_BUTTON_DPAD_LEFT},
-      {Button::L1, GLFW_GAMEPAD_BUTTON_LEFT_BUMPER},
-      {Button::R1, GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER},
-      {Button::Triangle, GLFW_GAMEPAD_BUTTON_TRIANGLE},
-      {Button::Circle, GLFW_GAMEPAD_BUTTON_CIRCLE},
-      {Button::X, GLFW_GAMEPAD_BUTTON_CROSS},
-      {Button::Square, GLFW_GAMEPAD_BUTTON_SQUARE}};
+  constexpr auto map = get_axis_map();
+  int axis = static_cast<int>(map[evt.axis]);
+  if (axis >= (int)Analog::Max)
+    return;
 
-  constexpr std::pair<Analog, int> gamepad_analog_map[] = {
-      {Analog::Left_X, GLFW_GAMEPAD_AXIS_LEFT_X},
-      {Analog::Left_Y, GLFW_GAMEPAD_AXIS_LEFT_Y},
-      {Analog::Right_X, GLFW_GAMEPAD_AXIS_RIGHT_X},
-      {Analog::Right_Y, GLFW_GAMEPAD_AXIS_RIGHT_Y}};
-
-  auto read_pad_state = [gamepad_map, gamepad_analog_map](int pad) {
-    GLFWgamepadstate state;
-    glfwGetGamepadState(g_gamepads.gamepad_idx[pad], &state);
-
-    for (const auto& [button, idx] : gamepad_map) {
-      g_gamepad_buttons[pad][(int)button] = state.buttons[idx];
-    }
-
-    g_gamepad_buttons[pad][(int)Button::L2] = state.axes[GLFW_GAMEPAD_AXIS_LEFT_TRIGGER] > 0;
-    g_gamepad_buttons[pad][(int)Button::R2] = state.axes[GLFW_GAMEPAD_AXIS_RIGHT_TRIGGER] > 0;
-
-    for (const auto& [analog_vector, idx] : gamepad_analog_map) {
-      g_gamepad_analogs[pad][(int)analog_vector] = state.axes[idx];
-    }
-  };
-
-  read_pad_state(0);
-
-  if (g_gamepads.gamepad_idx[1] != -1)
-    read_pad_state(1);
-  else
-    clear_pad(1);
+  const float value = static_cast<float>(evt.value) / (evt.value < 0 ? 32768.0f : 32767.0f);
+  g_gamepad_analogs[0][axis] = value;
 }
 
-int rumble(int pad, float slow_motor, float fast_motor) {
-  if (g_gamepads.gamepad_idx[pad] != -1 &&
-      glfwSetJoystickRumble(g_gamepads.gamepad_idx[pad], slow_motor, fast_motor)) {
+static constexpr std::array<Button, SDL_CONTROLLER_BUTTON_MAX> get_button_map() {
+  std::array<Button, SDL_CONTROLLER_BUTTON_MAX> map{};
+  map[SDL_CONTROLLER_BUTTON_A] = Button::X;
+  map[SDL_CONTROLLER_BUTTON_B] = Button::Circle;
+  map[SDL_CONTROLLER_BUTTON_X] = Button::Square;
+  map[SDL_CONTROLLER_BUTTON_Y] = Button::Triangle;
+  map[SDL_CONTROLLER_BUTTON_BACK] = Button::Select;
+  map[SDL_CONTROLLER_BUTTON_START] = Button::Start;
+  map[SDL_CONTROLLER_BUTTON_LEFTSTICK] = Button::L3;
+  map[SDL_CONTROLLER_BUTTON_RIGHTSTICK] = Button::R3;
+  map[SDL_CONTROLLER_BUTTON_LEFTSHOULDER] = Button::L1;
+  map[SDL_CONTROLLER_BUTTON_RIGHTSHOULDER] = Button::R1;
+  map[SDL_CONTROLLER_BUTTON_DPAD_UP] = Button::Up;
+  map[SDL_CONTROLLER_BUTTON_DPAD_DOWN] = Button::Down;
+  map[SDL_CONTROLLER_BUTTON_DPAD_LEFT] = Button::Left;
+  map[SDL_CONTROLLER_BUTTON_DPAD_RIGHT] = Button::Right;
+  return map;
+}
+
+void handle_button_event(SDL_ControllerButtonEvent& evt) {
+  constexpr auto map = get_button_map();
+  int button = static_cast<int>(map[evt.button]);
+  if (button >= (int)Button::Max)
+    return;
+
+  g_gamepad_buttons[0][button] = evt.state;
+}
+
+void update_gamepads() {
+  SDL_Event event;
+  while (SDL_PollEvent(&event)) {
+    switch (event.type) {
+      case SDL_KEYDOWN:
+        OnKeyPress(event.key.keysym.scancode);
+        break;
+      case SDL_KEYUP:
+        OnKeyRelease(event.key.keysym.scancode);
+        break;
+      case SDL_CONTROLLERBUTTONDOWN:
+      case SDL_CONTROLLERBUTTONUP:
+        handle_button_event(event.cbutton);
+        break;
+      case SDL_CONTROLLERAXISMOTION:
+        handle_axis_event(event.caxis);
+        break;
+      case SDL_CONTROLLERDEVICEADDED:
+        open_controller(event.cdevice.which);
+        break;
+      case SDL_CONTROLLERDEVICEREMOVED:
+        close_controller(event.cdevice.which);
+        break;
+    }
+  }
+}
+
+int rumble(int pad, u16 slow_motor, u16 fast_motor) {
+  if (g_gamepads.gamepad[pad] != nullptr) {
+    SDL_GameControllerRumble(g_gamepads.gamepad[pad], slow_motor, fast_motor, 2000);
     return 1;
   }
   return 0;

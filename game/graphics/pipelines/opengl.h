@@ -10,21 +10,22 @@
 #include "game/graphics/gfx.h"
 
 #include "third-party/glad/include/glad/glad.h"
-#include "third-party/glfw/include/GLFW/glfw3.h"
+#include "SDL.h"
 
-enum GlfwKeyAction {
-  Release = GLFW_RELEASE,  // falling edge of key press
-  Press = GLFW_PRESS,      // rising edge of key press
-  Repeat = GLFW_REPEAT     // repeated input on hold e.g. when typing something
+enum SDLKeyAction {
+  Release = SDL_RELEASED,  // falling edge of key press
+  Press = SDL_PRESSED,     // rising edge of key press
+  // Repeat = GLFW_REPEAT     // repeated input on hold e.g. when typing something
 };
 
 class GLDisplay : public GfxDisplay {
-  GLFWwindow* m_window;
+  SDL_Window* m_window;
 
  public:
-  GLDisplay(GLFWwindow* window, bool is_main);
+  GLDisplay(SDL_Window* window, bool is_main);
   virtual ~GLDisplay();
 
+  bool should_quit = false;
   void* get_window() const { return m_window; }
   void get_position(int* x, int* y);
   void get_size(int* w, int* h);
