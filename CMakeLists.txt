@@ -159,9 +159,7 @@ add_subdirectory(lsp)
 # build libco
 add_subdirectory(third-party/libco)
 
-# build glfw library
 add_subdirectory(third-party/zstd EXCLUDE_FROM_ALL)
-
 add_subdirectory(third-party/sdl2 EXCLUDE_FROM_ALL)
 
 # build imgui
