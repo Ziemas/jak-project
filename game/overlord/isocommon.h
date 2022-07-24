@@ -56,6 +56,7 @@ struct FileRecord {
   char name[12];
   uint32_t location;
   uint32_t size;
+  FILE* fp;
 };
 
 /*!

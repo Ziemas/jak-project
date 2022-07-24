@@ -183,6 +183,20 @@ uint32_t FS_GetLength(FileRecord* fr) {
   return len;
 }
 
+static int open_fr(FileRecord* fr) {
+  const char* path = get_file_path(fr);
+  FILE* fp = file_util::open_file(path, "rb");
+  if (!fp) {
+    lg::error("[OVERLORD] fake iso could not open the file \"{}\"", path);
+    return -1;
+  }
+  ASSERT(fp);
+
+  fr->fp = fp;
+
+  return 0;
+}
+
 /*!
  * Open a file by putting it on the load stack.
  * Set the offset to 0 or -1 if you do not want to have an offset.
@@ -200,6 +214,9 @@ LoadStackEntry* FS_Open(FileRecord* fr, int32_t offset) {
       if (offset != -1) {
         selected->location += offset;
       }
+
+      open_fr(fr);
+
       return selected;
     }
   }
@@ -221,6 +238,9 @@ LoadStackEntry* FS_OpenWad(FileRecord* fr, int32_t offset) {
       selected = sLoadStack + i;
       selected->fr = fr;
       selected->location = offset;
+
+      open_fr(fr);
+
       return selected;
     }
   }
@@ -236,6 +256,9 @@ LoadStackEntry* FS_OpenWad(FileRecord* fr, int32_t offset) {
 void FS_Close(LoadStackEntry* fd) {
   lg::debug("[OVERLORD] FS_Close {}", fd->fr->name);
 
+  fclose(fd->fr->fp);
+  fd->fr->fp = nullptr;
+
   // close the FD
   fd->fr = nullptr;
   if (fd == sReadInfo) {
@@ -246,8 +269,6 @@ void FS_Close(LoadStackEntry* fd) {
 /*!
  * Begin reading!  Returns FS_READ_OK on success (always)
  * This is an ISO FS API Function
- *
- * Idea: do the fopen in FS_Open and keep the file open?  It would be faster.
  */
 uint32_t FS_BeginRead(LoadStackEntry* fd, void* buffer, int32_t len) {
   ASSERT(fd->fr->location < fake_iso_entry_count);
@@ -263,26 +284,20 @@ uint32_t FS_BeginRead(LoadStackEntry* fd, void* buffer, int32_t len) {
   real_size = sectors * SECTOR_SIZE;
   u32 offset_into_file = SECTOR_SIZE * fd->location;
 
-  const char* path = get_file_path(fd->fr);
-  FILE* fp = file_util::open_file(path, "rb");
-  if (!fp) {
-    lg::error("[OVERLORD] fake iso could not open the file \"{}\"", path);
-  }
-  ASSERT(fp);
-  fseek(fp, 0, SEEK_END);
-  uint32_t file_len = ftell(fp);
-  rewind(fp);
+  fseek(fd->fr->fp, 0, SEEK_END);
+  uint32_t file_len = ftell(fd->fr->fp);
+  rewind(fd->fr->fp);
 
   if (offset_into_file < file_len) {
     if (offset_into_file) {
-      fseek(fp, offset_into_file, SEEK_SET);
+      fseek(fd->fr->fp, offset_into_file, SEEK_SET);
     }
 
     if (offset_into_file + real_size > file_len) {
       real_size = (file_len - offset_into_file);
     }
 
-    if (fread(buffer, real_size, 1, fp) != 1) {
+    if (fread(buffer, real_size, 1, fd->fr->fp) != 1) {
       ASSERT(false);
     }
   }
@@ -293,8 +308,6 @@ uint32_t FS_BeginRead(LoadStackEntry* fd, void* buffer, int32_t len) {
 
   fd->location += (len / SECTOR_SIZE);
   sReadInfo = fd;
-
-  fclose(fp);
 
   return CMD_STATUS_IN_PROGRESS;
 }
