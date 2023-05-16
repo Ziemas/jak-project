@@ -82,7 +82,6 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         -Wdisabled-optimization \
         -Wformat \
         -Wextra \
-        -Wmissing-include-dirs \
         -Woverloaded-virtual \
         -Wredundant-decls \
         -Wshadow \
@@ -109,7 +108,6 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
         -Wdisabled-optimization \
         -Wformat \
         -Wextra \
-        -Wmissing-include-dirs \
         -Woverloaded-virtual \
         -Wredundant-decls \
         -Wshadow \
@@ -184,7 +182,6 @@ string(REPLACE " ${THIRDPARTY_IGNORED_WARNINGS} " "" CMAKE_CXX_FLAGS "${CMAKE_CX
 
 # build tree-sitter parser
 include_directories(third-party/tree-sitter/tree-sitter/lib/include)
-include_directories(third-party/tree-sitter/tree-sitter-opengoal/include)
 add_subdirectory(third-party/tree-sitter EXCLUDE_FROM_ALL)
 
 # build common library
